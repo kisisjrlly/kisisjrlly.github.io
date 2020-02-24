@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>ElasticDL- A Kubernetes-native Deep Learning Framework</title>
+    <url>/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/</url>
+    <content><![CDATA[<hr>
+<h2 id="ElasticDL-A-Kubernetes-native-Deep-Learning-Framework"><a href="#ElasticDL-A-Kubernetes-native-Deep-Learning-Framework" class="headerlink" title="ElasticDL- A Kubernetes-native Deep Learning Framework"></a>ElasticDL- A Kubernetes-native Deep Learning Framework</h2><h1 id="k8s原生的深度学习框架"><a href="#k8s原生的深度学习框架" class="headerlink" title="k8s原生的深度学习框架"></a>k8s原生的深度学习框架</h1><p>ElasticDL是一个kubernets原生的深度学习框架，构建在TensorFlow 2.0之上，支持容错和弹性调度。</p>
+<h2 id="主要特性"><a href="#主要特性" class="headerlink" title="主要特性"></a>主要特性</h2><h3 id="弹性调度和容错"><a href="#弹性调度和容错" class="headerlink" title="弹性调度和容错"></a>弹性调度和容错</h3><ul>
+<li>ElasticDL通过Kubernetes-native设计实现容错，并与Kubernetes基于优先级的抢占机制协同工作，实现深度学习任务的弹性调度。</li>
+</ul>
+<h3 id="TF2-0：Eager-Execution"><a href="#TF2-0：Eager-Execution" class="headerlink" title="TF2.0：Eager Execution"></a>TF2.0：Eager Execution</h3><ul>
+<li>分布式深度学习框架在模型更新之前需要了解局部梯度。Eager Execution允许ElasticDL在不侵入图形执行过程的情况下执行。</li>
+</ul>
+<h3 id="极简API"><a href="#极简API" class="headerlink" title="极简API"></a>极简API</h3><p>给定一个用Keras API定义的模型，用命令行训练该模型。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">elasticdl train --model_def&#x3D;mnist_functional_api.custom_model --training_data&#x3D;&#x2F;mnist&#x2F;train --output&#x3D;output</span><br></pre></td></tr></table></figure>
+
+<h3 id="与SQLFlow整合"><a href="#与SQLFlow整合" class="headerlink" title="与SQLFlow整合"></a>与SQLFlow整合</h3><ul>
+<li>ElasticDL将与SQLFlow无缝集成，将SQL与ElasticDL连接到分布式深度学习任务。<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SELECT * FROM employee LABEL income INTO my_elasticdl_model</span><br></pre></td></tr></table></figure>
+<h3 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h3>TensorFlow有其本地的分布式计算特性，可以进行故障恢复。当某些进程失败时，分布式计算作业也会失败;但是，我们可以重新启动作业，并从最近的检查点文件恢复其运行时状态。</li>
+</ul>
+<p>ElasticDL增强了TensorFlow的分布式训练特性，支持容错。在某些进程失败的情况下，作业将继续运行。因此，ElasticDL不需要检查点，也不需要从检查点恢复。</p>
+<p>容错特性使得ElasticDL与Kubernetes基于优先级的抢占机制协同工作，实现弹性调度。当Kubernetes终止一个作业的某些进程，将资源释放给具有更高优先级的新作业时，当前作业不会失败，而是在资源更少的情况下继续工作。</p>
+<p>弹性调度可以显著提高集群的整体利用率。假设一个集群有N个gpu，一个作业使用其中一个。如果没有弹性调度，一个使用N个gpu的新作业在开始之前必须等待第一个作业完成。这个等待时间可能是几个小时、几天甚至几周。在这段很长的时间内，集群的利用率是1/N。使用弹性调度，新作业可以在N-1个GPU上立即开始运行，Kubernetes可以在第一个作业完成后将其GPU消耗增加1。在本例中，总利用率为100。</p>
+<p>ElasticDL的弹性调度特性来自于它的Kubernetes本机设计——它不依赖Kubeflow等Kubernetes扩展来运行TensorFlow程序;相反，ElasticDL作业的主进程调用Kubernetes API来启动worker和参数服务器;它还监视诸如进程/pod杀死之类的事件，并对此类事件作出响应，以实现容错。</p>
+<p>总之，在Kubernetes集群的情况下，ElasticDL通过容错和弹性调度增强了TensorFlow。我们提供了一个教程，演示如何在谷歌云中设置Kubernetes集群并在那里运行ElasticDL作业。我们尊重TensorFlow的本地分布式计算特性，它不需要像Kubernetes这样的特定计算平台，并且允许TensorFlow在任何平台上运行。</p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><ul>
+<li><a href="https://github.com/sql-machine-learning/elasticdl" target="_blank" rel="noopener">github主页</a></li>
+<li><p align="right"><font color="red" size="28">fasdfsa</font></p></li>
+</ul>
+]]></content>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2020/02/24/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
+]]></content>
+  </entry>
+</search>
