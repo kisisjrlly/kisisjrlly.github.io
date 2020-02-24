@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-02-24T05:50:00.854Z</updated>
+  <updated>2020-02-24T08:10:15.019Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>ElasticDL- A Kubernetes-native Deep Learning Framework</title>
+    <title>ElasticDL</title>
     <link href="http://yoursite.com/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/"/>
     <id>http://yoursite.com/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/</id>
     <published>2020-02-24T05:44:04.549Z</published>
-    <updated>2020-02-24T05:50:00.854Z</updated>
+    <updated>2020-02-24T08:10:15.019Z</updated>
     
     <summary type="html">
     
@@ -29,14 +29,23 @@
       
         
         
-          &lt;hr&gt;
-&lt;h2 id=&quot;ElasticDL-A-Kubernetes-native-Deep-Learning-Framework&quot;&gt;&lt;a href=&quot;#ElasticDL-A-Kubernetes-native-Deep-Learning-Framework&quot;
+          &lt;h1 id=&quot;k8s原生的深度学习框架&quot;&gt;&lt;a href=&quot;#k8s原生的深度学习框架&quot; class=&quot;headerlink&quot;
         
       
     
     </summary>
     
     
+      <category term="Distributed Computation" scheme="http://yoursite.com/categories/Distributed-Computation/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="ml" scheme="http://yoursite.com/tags/ml/"/>
+    
+      <category term="fault tolerance" scheme="http://yoursite.com/tags/fault-tolerance/"/>
     
   </entry>
   
@@ -45,7 +54,7 @@
     <link href="http://yoursite.com/2020/02/24/hello-world/"/>
     <id>http://yoursite.com/2020/02/24/hello-world/</id>
     <published>2020-02-24T04:55:50.974Z</published>
-    <updated>2020-02-24T08:02:35.889Z</updated>
+    <updated>2020-02-24T08:06:28.486Z</updated>
     
     <summary type="html">
     
@@ -60,10 +69,10 @@
     </summary>
     
     
-      <category term="Hexo" scheme="http://yoursite.com/categories/Hexo/"/>
+      <category term="BlogTest" scheme="http://yoursite.com/categories/BlogTest/"/>
     
     
-      <category term="Hexo" scheme="http://yoursite.com/tags/Hexo/"/>
+      <category term="BlogTest" scheme="http://yoursite.com/tags/BlogTest/"/>
     
   </entry>
   

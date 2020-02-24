@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>ElasticDL- A Kubernetes-native Deep Learning Framework</title>
+    <title>ElasticDL</title>
     <url>/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/</url>
-    <content><![CDATA[<hr>
-<h2 id="ElasticDL-A-Kubernetes-native-Deep-Learning-Framework"><a href="#ElasticDL-A-Kubernetes-native-Deep-Learning-Framework" class="headerlink" title="ElasticDL- A Kubernetes-native Deep Learning Framework"></a>ElasticDL- A Kubernetes-native Deep Learning Framework</h2><h1 id="k8s原生的深度学习框架"><a href="#k8s原生的深度学习框架" class="headerlink" title="k8s原生的深度学习框架"></a>k8s原生的深度学习框架</h1><p>ElasticDL是一个kubernets原生的深度学习框架，构建在TensorFlow 2.0之上，支持容错和弹性调度。</p>
+    <content><![CDATA[<h1 id="k8s原生的深度学习框架"><a href="#k8s原生的深度学习框架" class="headerlink" title="k8s原生的深度学习框架"></a>k8s原生的深度学习框架</h1><p>ElasticDL是一个kubernets原生的深度学习框架，构建在TensorFlow 2.0之上，支持容错和弹性调度。</p>
 <h2 id="主要特性"><a href="#主要特性" class="headerlink" title="主要特性"></a>主要特性</h2><h3 id="弹性调度和容错"><a href="#弹性调度和容错" class="headerlink" title="弹性调度和容错"></a>弹性调度和容错</h3><ul>
 <li>ElasticDL通过Kubernetes-native设计实现容错，并与Kubernetes基于优先级的抢占机制协同工作，实现深度学习任务的弹性调度。</li>
 </ul>
@@ -28,6 +27,15 @@
 <li><p align="right"><font color="red" size="28">fasdfsa</font></p></li>
 </ul>
 ]]></content>
+      <categories>
+        <category>Distributed Computation</category>
+      </categories>
+      <tags>
+        <tag>system</tag>
+        <tag>distribute</tag>
+        <tag>ml</tag>
+        <tag>fault tolerance</tag>
+      </tags>
   </entry>
   <entry>
     <title>Hello World</title>
@@ -47,10 +55,10 @@
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 ]]></content>
       <categories>
-        <category>Hexo</category>
+        <category>BlogTest</category>
       </categories>
       <tags>
-        <tag>Hexo</tag>
+        <tag>BlogTest</tag>
       </tags>
   </entry>
 </search>
