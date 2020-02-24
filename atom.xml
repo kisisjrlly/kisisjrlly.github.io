@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-02-24T08:45:37.173Z</updated>
+  <updated>2020-02-24T08:52:45.160Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,43 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>TLA+资料整理</title>
+    <link href="http://yoursite.com/2020/02/24/TLA+%E8%B5%84%E6%96%99%E6%95%B4%E7%90%86/"/>
+    <id>http://yoursite.com/2020/02/24/TLA+%E8%B5%84%E6%96%99%E6%95%B4%E7%90%86/</id>
+    <published>2020-02-24T08:51:23.224Z</published>
+    <updated>2020-02-24T08:52:45.160Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/tlaplus&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Github官方库&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a
+        
+      
+    
+    </summary>
+    
+    
+      <category term="os" scheme="http://yoursite.com/categories/os/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="fault tolerance" scheme="http://yoursite.com/tags/fault-tolerance/"/>
+    
+      <category term="raft" scheme="http://yoursite.com/tags/raft/"/>
+    
+      <category term="paxos" scheme="http://yoursite.com/tags/paxos/"/>
+    
+  </entry>
   
   <entry>
     <title>ElasticDL</title>

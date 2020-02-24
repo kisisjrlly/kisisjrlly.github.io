@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>TLA+资料整理</title>
+    <url>/2020/02/24/TLA+%E8%B5%84%E6%96%99%E6%95%B4%E7%90%86/</url>
+    <content><![CDATA[<ul>
+<li><a href="https://github.com/tlaplus" target="_blank" rel="noopener">Github官方库</a></li>
+<li><a href="https://blog.csdn.net/solotzg/article/details/80669924" target="_blank" rel="noopener">Raft TLA+形式化验证</a></li>
+<li><a href="http://lamport.azurewebsites.net/video/videos.html" target="_blank" rel="noopener">lamport老爷子的官方视频入门教程</a></li>
+<li><a href="http://www.tlaplus.net/projects/tlaps-a-tla-proof-system/" target="_blank" rel="noopener">TLA+Proof:TLAPS: A TLA+ Proof System</a></li>
+<li><a href="https://www.zhihu.com/people/feng-zun-bao-4/posts" target="_blank" rel="noopener">冯遵宝知乎TLA+教程</a></li>
+<li><a href="http://lamport.azurewebsites.net/tla/tla.html" target="_blank" rel="noopener">TLA+官网</a></li>
+<li><a href="https://www.jianshu.com/p/b21668967eb5" target="_blank" rel="noopener">siddontang简书TLA+学习笔记</a></li>
+<li><a href="https://wenku.baidu.com/u/hitman_007?from=wenku" target="_blank" rel="noopener">离散数学百度文库</a></li>
+<li>推荐参考书籍<a href="https://lamport.azurewebsites.net/tla/book.html?back-link=learning.html#book" target="_blank" rel="noopener">Specifying Systems</a></li>
+<li><a href="https://lamport.azurewebsites.net/tla/toolbox.html" target="_blank" rel="noopener">IDE工具</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>os</category>
+      </categories>
+      <tags>
+        <tag>system</tag>
+        <tag>distribute</tag>
+        <tag>fault tolerance</tag>
+        <tag>raft</tag>
+        <tag>paxos</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>ElasticDL</title>
     <url>/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/</url>
     <content><![CDATA[<h1 id="k8s原生的深度学习框架"><a href="#k8s原生的深度学习框架" class="headerlink" title="k8s原生的深度学习框架"></a>k8s原生的深度学习框架</h1><p>ElasticDL是一个kubernets原生的深度学习框架，构建在TensorFlow 2.0之上，支持容错和弹性调度。</p>
