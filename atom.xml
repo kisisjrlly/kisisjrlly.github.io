@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-02-24T08:52:45.160Z</updated>
+  <updated>2020-02-27T10:26:08.776Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,39 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Spark</title>
+    <link href="http://yoursite.com/2020/02/27/spark/"/>
+    <id>http://yoursite.com/2020/02/27/spark/</id>
+    <published>2020-02-27T10:24:07.089Z</published>
+    <updated>2020-02-27T10:26:08.776Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h2 id=&quot;Introduction&quot;&gt;&lt;a href=&quot;#Introduction&quot; class=&quot;headerlink&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed computation" scheme="http://yoursite.com/categories/distributed-computation/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="fault tolerance" scheme="http://yoursite.com/tags/fault-tolerance/"/>
+    
+      <category term="big date" scheme="http://yoursite.com/tags/big-date/"/>
+    
+  </entry>
   
   <entry>
     <title>TLA+资料整理</title>

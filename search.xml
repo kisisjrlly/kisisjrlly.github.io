@@ -1,6 +1,167 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Spark</title>
+    <url>/2020/02/27/spark/</url>
+    <content><![CDATA[<h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>spark：hadoop的升级版，通过定义新的数据抽象解决现有的问题，类似于数据结构中有数组，高维数组，集合，map，但是现有的数据结构不适用于特定的问题，spark抛开能想到的基础数据结构，重新定义新的数据抽象解决了现有以Hadoop为基础的大数据平台的特定问题。</p>
+<ul>
+<li>现有的大数据平台的缺点：<ul>
+<li>Hadoop：保存到中间文件写磁盘，且不能重复利用中间数据，较多的磁盘IO等overead。</li>
+<li>存在对hadoop的改进版本系统：Pregel，然而，这些框架只支持特定的计算模式(例如，循环一系列MapReduce步骤)，并隐式地为这些模式执行数据共享。它们不提供更一般重用的抽象，例如，让用户将多个数据集加载到内存中，并在其中运行特别的查询。</li>
+</ul>
+</li>
+<li>spark的解决方法<ul>
+<li>定义数据抽象RDD：具有容错，数据并行执行，数据可显示保存到内存中去，优化的数据存放策略和丰富的API的特性。</li>
+<li>设计RDD主要的挑战是如何有效的容错（Google 的GFS，MapReduce 本质上是解决FT问题，因此引领大数据技术的发展）。<ul>
+<li>现有的基于传统数据库的容错方式：replication+log overhead仍然较高，RDD可以通过重新计算（Lineage）的方式恢复（本质上的方法类似造火箭：我知道你是如何造出来的，你坏掉了我重新再造一个出来就好了）。</li>
+<li>但是Lineage计算较长时还是会用到log。</li>
+<li>Spark设计目的专注于批处理分析的高效编程模型，不适用于对共享变量进行异步细粒度更新的应用程序，比如分布式InMemoryDB，对于这些系统的工作还是交给RamCloud好了。。。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="scala"><a href="#scala" class="headerlink" title="scala"></a>scala</h3><p>是一种多范式的编程语言，类似于java，python编程，设计初衷是要集成面向对象编程和函数式编程的各种特性。</p>
+<h3 id="什么是RDD"><a href="#什么是RDD" class="headerlink" title="什么是RDD"></a>什么是RDD</h3><p>RDD是一种数据抽象：弹性分布式数据集合（Resilient Distributed Dataset），是spark的基本元素，不可变，可分区，里面的元素可以被分布式并行执行（对码农透明）。</p>
+<ul>
+<li>Resilient<ul>
+<li>代表数据可以存在内存也可以存到磁盘，计算快</li>
+</ul>
+</li>
+<li>Distributed<ul>
+<li>一个RDD被分布式存储，容错，又可以分布式并行计算</li>
+</ul>
+</li>
+<li>Dataset<ul>
+<li>类似于Hadoop中的文件，是一种抽象的分布式数据集合</li>
+</ul>
+</li>
+</ul>
+<h3 id="RDD五大特性"><a href="#RDD五大特性" class="headerlink" title="RDD五大特性"></a>RDD五大特性</h3><p>具有以下性质：</p>
+<ul>
+<li>A list of partitions<ul>
+<li>一个RDD有多个分区，是一组分区列表，spark的task是以分区为单位，每个分布对应一个task线程（并行计算）。运行再worker节点的executor线程中。</li>
+</ul>
+</li>
+<li>A function for computing each split<ul>
+<li>函数会同时作用在所有的分区上。</li>
+</ul>
+</li>
+<li>A list of dependencies on other RDDs<ul>
+<li>新产生的RDD依赖于前期的存在的RDD（RDD被保存在内存中，可以被重复使用；可以实现无checkpoint+log的Fault tolerance机制）</li>
+</ul>
+</li>
+<li>Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)<ul>
+<li>（可选项）对于KV类型的RDD可以hashparition存储（必须产生shffule），如果不是KV类型—-就表示木有</li>
+<li>在spark中，有两种分区函数：<ul>
+<li>第一种：HashPationer函数             对key去hashcode，然后对分区数取余得到对应的分区号———-&gt; key.hashcode % 分区数 = 分区号 。</li>
+<li>第二种：RangeParitoner函数，按照一定的范围进行分区，相同范围的key会进入同一个分区。（A-H）—-&gt; 1号分区，（I-Z）—-&gt; 2号分区。</li>
+</ul>
+</li>
+<li>Optionally, a list of preferred locations to compute each split on (e.g. block locations for<br>an HDFS file)<ul>
+<li>（可选项）  一组最有的数据库位置列表：数据的本地性，数据的位置最优<ul>
+<li>spark后期任务计算优先考虑存在数据的节点开启计算任务，也就是说数据在哪里，就在哪里开启计算任务，大大减少网络传输。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>以单词划分为例：<br><img src="https://img-blog.csdnimg.cn/20200227120058838.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h3 id="RDD-算子操作分类"><a href="#RDD-算子操作分类" class="headerlink" title="RDD 算子操作分类"></a>RDD 算子操作分类</h3><ul>
+<li><ol>
+<li>transformation（转换）</li>
+</ol>
+<ul>
+<li>它可以把一份RDD转换生成一个心的Rdd，延迟加载，不会立即触发任务的真正运行</li>
+<li>比如flatMap/map/reduceByKey</li>
+</ul>
+</li>
+<li><ol start="2">
+<li>action(动作)</li>
+</ol>
+<ul>
+<li>会触发任务的真正运行</li>
+<li>比如collect/SaveAsTextFile</li>
+</ul>
+</li>
+</ul>
+<h3 id="RDD的依赖关系"><a href="#RDD的依赖关系" class="headerlink" title="RDD的依赖关系"></a>RDD的依赖关系</h3><p><img src="https://img-blog.csdnimg.cn/20200227121033678.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<ul>
+<li><ol>
+<li>narrow dependencies 窄依赖</li>
+</ol>
+<ul>
+<li>where each partition of the parent RDD is used by at most one partition of the child RDD :父RDD的每一个分区至多只被子RDD的一个分区使用</li>
+<li>如map/filter/flaMap</li>
+<li>不会产生shuffle</li>
+</ul>
+</li>
+<li><ol start="2">
+<li>wide dependencies 宽依赖</li>
+</ol>
+<ul>
+<li>where multiple child partitions may depend on it：子RDD的多个分区会依赖于父RDD的同一个分区</li>
+<li>比如reduceByKey</li>
+<li>会产生shuffle</li>
+</ul>
+</li>
+<li><ol start="3">
+<li>lineage 血统</li>
+</ol>
+<ul>
+<li>RDD的产生路径</li>
+<li>有向无环图，后期如果某个RDD的分区数据丢失，可以通过lineage重新计算恢复。</li>
+</ul>
+</li>
+</ul>
+<h3 id="RDD的缓存机制"><a href="#RDD的缓存机制" class="headerlink" title="RDD的缓存机制"></a>RDD的缓存机制</h3><p>可以把RDD的数据缓存在内存或者磁盘中，后期需要时从缓存中取出，不用重新计算。</p>
+<ul>
+<li>可以设置不同的缓存级别，如DISK_ONLY,DISK_ONLY_2,MEMORY_AND_DISK_SER_2（内存和磁盘都保存两份并序列化）</li>
+<li>对计算复杂的RDD设置缓存。</li>
+</ul>
+<h3 id="DAG的构建和构建stage"><a href="#DAG的构建和构建stage" class="headerlink" title="DAG的构建和构建stage"></a>DAG的构建和构建stage</h3><ul>
+<li>lineage<ul>
+<li>它是按照RDD之间的依赖生成的有向无环图</li>
+</ul>
+</li>
+<li>stage<ul>
+<li>后期会根据DAG划分stage：从图的lowest节点往前，构建初始stage，往前遍历DAG，如果是窄依赖，则加入此stage，如果是宽依赖则构建新的stage。</li>
+<li>stage也会产生依赖：前面stage中task差生的数据流入后面stage中的task去。</li>
+<li>划分stage的原因<ul>
+<li>由于一个job任务中可能会有大量的宽依赖，由于宽依赖不会产生shufflw，宽依赖会产生shuffle。划分完stage后，在同一个stage中只有窄依赖，则可以对应task并行执行： 所有的stage中由并行执行的task组成。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>App，job，Stage，Task之间的关系：<ul>
+<li>application 是spark的一个应用程序，包含了客户端写好的代码以及任务运行时所需要的资源信息。后期一个app中有多个action操作，每个action对应一个job，一个job由产生了多个stage，每一个stage内部有很多并行运行的task构成的集合。</li>
+</ul>
+</li>
+</ul>
+<h2 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h2><ul>
+<li><a href="https://www.jianshu.com/p/7ea0a450eec8" target="_blank" rel="noopener">Scala 中 _ 代表什么</a></li>
+<li><a href="https://www.bilibili.com/video/av76914891?from=search&seid=13134650878163258083" target="_blank" rel="noopener">原理视频教程</a></li>
+<li><a href="https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/rdd/RDD.scala" target="_blank" rel="noopener">RDD源代码定义</a></li>
+<li><a href="https://www.runoob.com/scala/scala-tutorial.html" target="_blank" rel="noopener">scala教程</a></li>
+<li><a href="">6.824讲义</a></li>
+<li><a href="">spark论文原文</a></li>
+<li><a href="https://blog.csdn.net/someInNeed/article/details/90047624" target="_blank" rel="noopener">Scala中的”- &gt;”和” -“以及”=&gt;”</a></li>
+<li><a href="https://www.zhihu.com/answer/41608400" target="_blank" rel="noopener">从Hadoop进化到Spark</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>distributed computation</category>
+      </categories>
+      <tags>
+        <tag>system</tag>
+        <tag>distribute</tag>
+        <tag>fault tolerance</tag>
+        <tag>big date</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>TLA+资料整理</title>
     <url>/2020/02/24/TLA+%E8%B5%84%E6%96%99%E6%95%B4%E7%90%86/</url>
     <content><![CDATA[<ul>
