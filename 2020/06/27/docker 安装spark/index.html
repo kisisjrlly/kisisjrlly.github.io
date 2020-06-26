@@ -32,7 +32,7 @@
   <div id="app">
     <main class="content">
       <section class="outer">
-  <article id="post-spark" class="article article-type-post" itemscope
+  <article id="post-docker 安装spark" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
   <div class="article-inner">
@@ -49,12 +49,12 @@
 
     
     <div class="article-meta">
-      <a href="/2020/02/27/spark/" class="article-date">
-  <time datetime="2020-02-27T10:24:07.089Z" itemprop="datePublished">2020-02-27</time>
+      <a href="/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/" class="article-date">
+  <time datetime="2020-06-26T23:21:18.998Z" itemprop="datePublished">2020-06-27</time>
 </a>
       
   <div class="article-category">
-    <a class="article-category-link" href="/categories/distributed-computation/">distributed computation</a>
+    <a class="article-category-link" href="/categories/experience/">experience</a>
   </div>
 
       
@@ -64,7 +64,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">1.7k字</span>
+            <span class="post-count">598字</span>
         </span>
     </span>
 
@@ -73,7 +73,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">6分钟</span>
+            <span class="post-count">2分钟</span>
         </span>
     </span>
 </div>
@@ -100,157 +100,37 @@
       
 
       
-      <h2 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h2><p>spark：hadoop的升级版，通过定义新的数据抽象解决现有的问题，类似于数据结构中有数组，高维数组，集合，map，但是现有的数据结构不适用于特定的问题，spark抛开能想到的基础数据结构，重新定义新的数据抽象解决了现有以Hadoop为基础的大数据平台的特定问题。</p>
+      <p>疫情期间身边只有笔记本，想学习一哈spark（因为正在研究declarative  ml，要看SystemML的论文），配置环境太麻烦，因此想用docker pull 一下网上现成的镜像，由于是私人hub，docker直接pull时还是网络慢到让人崩溃。。。采用github上的自己build，由于国内网络原因，安装了n次，好几个g的镜像，简直让人崩溃。</p>
+<p>过了n天后，偶然想起阿里云提供了免费的doker 仓库并支在线build。真是爽歪歪。。。</p>
+<p>一句话总结整个过程的安装方式：利用github上的Dockerfile，使用阿里云提供的容器镜像服务，构建对应的 Docker镜像，从阿里云中pull到本地。</p>
+<p>从dockerfile 到 build 全部在线完成，没有网络问题，速度也杠杠的，不得不感谢阿里云云计算的NB(因为免费，所以感谢，所以NB，haha)。</p>
+<p>现在记录一下过程：</p>
 <ul>
-<li>现有的大数据平台的缺点：<ul>
-<li>Hadoop：保存到中间文件写磁盘，且不能重复利用中间数据，较多的磁盘IO等overead。</li>
-<li>存在对hadoop的改进版本系统：Pregel，然而，这些框架只支持特定的计算模式(例如，循环一系列MapReduce步骤)，并隐式地为这些模式执行数据共享。它们不提供更一般重用的抽象，例如，让用户将多个数据集加载到内存中，并在其中运行特别的查询。</li>
+<li>利用github fork <a href="https://github.com/sequenceiq/docker-spark。" target="_blank" rel="noopener">https://github.com/sequenceiq/docker-spark。</a></li>
+<li>阿里云容器镜像服务关联上述仓库，然后build，如果可以build成功，ok，本文结束。</li>
 </ul>
-</li>
-<li>spark的解决方法<ul>
-<li>定义数据抽象RDD：具有容错，数据并行执行，数据可显示保存到内存中去，优化的数据存放策略和丰富的API的特性。</li>
-<li>设计RDD主要的挑战是如何有效的容错（Google 的GFS，MapReduce 本质上是解决FT问题，因此引领大数据技术的发展）。<ul>
-<li>现有的基于传统数据库的容错方式：replication+log overhead仍然较高，RDD可以通过重新计算（Lineage）的方式恢复（本质上的方法类似造火箭：我知道你是如何造出来的，你坏掉了我重新再造一个出来就好了）。</li>
-<li>但是Lineage计算较长时还是会用到log。</li>
-<li>Spark设计目的专注于批处理分析的高效编程模型，不适用于对共享变量进行异步细粒度更新的应用程序，比如分布式InMemoryDB，对于这些系统的工作还是交给RamCloud好了。。。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="scala"><a href="#scala" class="headerlink" title="scala"></a>scala</h3><p>是一种多范式的编程语言，类似于java，python编程，设计初衷是要集成面向对象编程和函数式编程的各种特性。</p>
-<h3 id="什么是RDD"><a href="#什么是RDD" class="headerlink" title="什么是RDD"></a>什么是RDD</h3><p>RDD是一种数据抽象：弹性分布式数据集合（Resilient Distributed Dataset），是spark的基本元素，不可变，可分区，里面的元素可以被分布式并行执行（对码农透明）。</p>
+<p>人生之不如意，十有八九。下面记载我直接build过程会遇到如下错误（如果用github+阿里云，都会遇到下面的问题）：</p>
+<p><img src="https://img-blog.csdnimg.cn/20200420223722488.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>找不到epel安装源，大概是/etc/yum.repos.d/epel.repo 中镜像列表是https的问题，所以我直接修正并新建了一个epel.repo文件，build时替换掉原先的文件。</p>
 <ul>
-<li>Resilient<ul>
-<li>代表数据可以存在内存也可以存到磁盘，计算快</li>
-</ul>
+<li><p>此外按照原先的rpm安装epel方式在安装R语言时会遇到依赖问题，因此我直接把Dockerfile中的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN rpm -ivh http:&#x2F;&#x2F;dl.fedoraproject.org&#x2F;pub&#x2F;epel&#x2F;6&#x2F;x86_64&#x2F;epel-release-6-8.noarch.rpm</span><br></pre></td></tr></table></figure>
+<p>修改为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN yum -y install epel-release</span><br></pre></td></tr></table></figure>
+<p>因为镜像在build的过程中不能和命令交互，因此yum时别忘了参数 ==-y==。</p>
 </li>
-<li>Distributed<ul>
-<li>一个RDD被分布式存储，容错，又可以分布式并行计算</li>
-</ul>
-</li>
-<li>Dataset<ul>
-<li>类似于Hadoop中的文件，是一种抽象的分布式数据集合</li>
-</ul>
+<li><p>因为镜像太大，阿里云build时成功率不会是百分之百，比如：<br><img src="https://img-blog.csdnimg.cn/20200420230859514.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
 </li>
 </ul>
-<h3 id="RDD五大特性"><a href="#RDD五大特性" class="headerlink" title="RDD五大特性"></a>RDD五大特性</h3><p>具有以下性质：</p>
-<ul>
-<li>A list of partitions<ul>
-<li>一个RDD有多个分区，是一组分区列表，spark的task是以分区为单位，每个分布对应一个task线程（并行计算）。运行再worker节点的executor线程中。</li>
-</ul>
-</li>
-<li>A function for computing each split<ul>
-<li>函数会同时作用在所有的分区上。</li>
-</ul>
-</li>
-<li>A list of dependencies on other RDDs<ul>
-<li>新产生的RDD依赖于前期的存在的RDD（RDD被保存在内存中，可以被重复使用；可以实现无checkpoint+log的Fault tolerance机制）</li>
-</ul>
-</li>
-<li>Optionally, a Partitioner for key-value RDDs (e.g. to say that the RDD is hash-partitioned)<ul>
-<li>（可选项）对于KV类型的RDD可以hashparition存储（必须产生shffule），如果不是KV类型—-就表示木有</li>
-<li>在spark中，有两种分区函数：<ul>
-<li>第一种：HashPationer函数             对key去hashcode，然后对分区数取余得到对应的分区号———-&gt; key.hashcode % 分区数 = 分区号 。</li>
-<li>第二种：RangeParitoner函数，按照一定的范围进行分区，相同范围的key会进入同一个分区。（A-H）—-&gt; 1号分区，（I-Z）—-&gt; 2号分区。</li>
-</ul>
-</li>
-<li>Optionally, a list of preferred locations to compute each split on (e.g. block locations for<br>an HDFS file)<ul>
-<li>（可选项）  一组最有的数据库位置列表：数据的本地性，数据的位置最优<ul>
-<li>spark后期任务计算优先考虑存在数据的节点开启计算任务，也就是说数据在哪里，就在哪里开启计算任务，大大减少网络传输。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>以单词划分为例：<br><img src="https://img-blog.csdnimg.cn/20200227120058838.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
-<h3 id="RDD-算子操作分类"><a href="#RDD-算子操作分类" class="headerlink" title="RDD 算子操作分类"></a>RDD 算子操作分类</h3><ul>
-<li><ol>
-<li>transformation（转换）</li>
-</ol>
-<ul>
-<li>它可以把一份RDD转换生成一个心的Rdd，延迟加载，不会立即触发任务的真正运行</li>
-<li>比如flatMap/map/reduceByKey</li>
-</ul>
-</li>
-<li><ol start="2">
-<li>action(动作)</li>
-</ol>
-<ul>
-<li>会触发任务的真正运行</li>
-<li>比如collect/SaveAsTextFile</li>
-</ul>
-</li>
-</ul>
-<h3 id="RDD的依赖关系"><a href="#RDD的依赖关系" class="headerlink" title="RDD的依赖关系"></a>RDD的依赖关系</h3><p><img src="https://img-blog.csdnimg.cn/20200227121033678.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
-<ul>
-<li><ol>
-<li>narrow dependencies 窄依赖</li>
-</ol>
-<ul>
-<li>where each partition of the parent RDD is used by at most one partition of the child RDD :父RDD的每一个分区至多只被子RDD的一个分区使用</li>
-<li>如map/filter/flaMap</li>
-<li>不会产生shuffle</li>
-</ul>
-</li>
-<li><ol start="2">
-<li>wide dependencies 宽依赖</li>
-</ol>
-<ul>
-<li>where multiple child partitions may depend on it：子RDD的多个分区会依赖于父RDD的同一个分区</li>
-<li>比如reduceByKey</li>
-<li>会产生shuffle</li>
-</ul>
-</li>
-<li><ol start="3">
-<li>lineage 血统</li>
-</ol>
-<ul>
-<li>RDD的产生路径</li>
-<li>有向无环图，后期如果某个RDD的分区数据丢失，可以通过lineage重新计算恢复。</li>
-</ul>
-</li>
-</ul>
-<h3 id="RDD的缓存机制"><a href="#RDD的缓存机制" class="headerlink" title="RDD的缓存机制"></a>RDD的缓存机制</h3><p>可以把RDD的数据缓存在内存或者磁盘中，后期需要时从缓存中取出，不用重新计算。</p>
-<ul>
-<li>可以设置不同的缓存级别，如DISK_ONLY,DISK_ONLY_2,MEMORY_AND_DISK_SER_2（内存和磁盘都保存两份并序列化）</li>
-<li>对计算复杂的RDD设置缓存。</li>
-</ul>
-<h3 id="DAG的构建和构建stage"><a href="#DAG的构建和构建stage" class="headerlink" title="DAG的构建和构建stage"></a>DAG的构建和构建stage</h3><ul>
-<li>lineage<ul>
-<li>它是按照RDD之间的依赖生成的有向无环图</li>
-</ul>
-</li>
-<li>stage<ul>
-<li>后期会根据DAG划分stage：从图的lowest节点往前，构建初始stage，往前遍历DAG，如果是窄依赖，则加入此stage，如果是宽依赖则构建新的stage。</li>
-<li>stage也会产生依赖：前面stage中task差生的数据流入后面stage中的task去。</li>
-<li>划分stage的原因<ul>
-<li>由于一个job任务中可能会有大量的宽依赖，由于宽依赖不会产生shufflw，宽依赖会产生shuffle。划分完stage后，在同一个stage中只有窄依赖，则可以对应task并行执行： 所有的stage中由并行执行的task组成。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>App，job，Stage，Task之间的关系：<ul>
-<li>application 是spark的一个应用程序，包含了客户端写好的代码以及任务运行时所需要的资源信息。后期一个app中有多个action操作，每个action对应一个job，一个job由产生了多个stage，每一个stage内部有很多并行运行的task构成的集合。</li>
-</ul>
-</li>
-</ul>
-<h2 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h2><ul>
-<li><a href="https://www.jianshu.com/p/7ea0a450eec8" target="_blank" rel="noopener">Scala 中 _ 代表什么</a></li>
-<li><a href="https://www.bilibili.com/video/av76914891?from=search&seid=13134650878163258083" target="_blank" rel="noopener">原理视频教程</a></li>
-<li><a href="https://github.com/apache/spark/blob/master/core/src/main/scala/org/apache/spark/rdd/RDD.scala" target="_blank" rel="noopener">RDD源代码定义</a></li>
-<li><a href="https://www.runoob.com/scala/scala-tutorial.html" target="_blank" rel="noopener">scala教程</a></li>
-<li><a href="">6.824讲义</a></li>
-<li><a href="">spark论文原文</a></li>
-<li><a href="https://blog.csdn.net/someInNeed/article/details/90047624" target="_blank" rel="noopener">Scala中的”- &gt;”和” -“以及”=&gt;”</a></li>
-<li><a href="https://www.zhihu.com/answer/41608400" target="_blank" rel="noopener">从Hadoop进化到Spark</a></li>
-<li><a href="http://dblab.xmu.edu.cn/blog/spark/" target="_blank" rel="noopener">子雨大数据之Spark入门教程（Scala版）</a><h2 id="spark实践"><a href="#spark实践" class="headerlink" title="spark实践"></a>spark实践</h2><h3 id="docker安装方式："><a href="#docker安装方式：" class="headerlink" title="docker安装方式："></a>docker安装方式：</h3></li>
-<li><a href="https://blog.csdn.net/u013705066/article/details/80030732" target="_blank" rel="noopener">https://blog.csdn.net/u013705066/article/details/80030732</a></li>
-</ul>
-<h2 id="else"><a href="#else" class="headerlink" title="else"></a>else</h2><h3 id="spark内存计算"><a href="#spark内存计算" class="headerlink" title="spark内存计算"></a>spark内存计算</h3><ul>
-<li><a href="https://www.zhihu.com/question/23079001/answer/23569986" target="_blank" rel="noopener">https://www.zhihu.com/question/23079001/answer/23569986</a></li>
+<p>具体原因是：</p>
+<p><img src="https://img-blog.csdnimg.cn/20200420230927347.png" alt="image"></p>
+<p>所以多尝试几次就好了（毕竟免费，免费）。。。</p>
+<p>修改完后可以直接build成功的github仓库可以直接fork：<a href="https://github.com/kisisjrlly/docker-spark/" target="_blank" rel="noopener">https://github.com/kisisjrlly/docker-spark/</a></p>
+<p>然后在本机上可以直接pull阿里云上build好的镜像啦，然后就可以愉快的玩耍啦。。。</p>
+<h3 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h3><ul>
+<li><a href="https://blog.csdn.net/weixin_43569697/article/details/89279225" target="_blank" rel="noopener">修改阿里下载镜像</a></li>
+<li><a href="https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors" target="_blank" rel="noopener">阿里容器镜像服务</a></li>
+<li><a href="https://mp.weixin.qq.com/s/kf0SrktAze3bT7LcIveDYw" target="_blank" rel="noopener">国内下载被墙的Docker镜像</a></li>
 </ul>
 
       
@@ -317,14 +197,14 @@
     <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2020/02/27/spark/" alt="微信分享二维码">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/" alt="微信分享二维码">
     </div>
 </div>
 
 <div id="share-mask"></div>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/big-date/" rel="tag">big date</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/fault-tolerance/" rel="tag">fault tolerance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spark/" rel="tag">spark</a></li></ul>
 
 
     </footer>
@@ -335,19 +215,10 @@
   
   <nav class="article-nav">
     
-      <a href="/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            Spark
-          
-        </div>
-      </a>
     
-    
-      <a href="/2020/02/24/TLA+%E8%B5%84%E6%96%99%E6%95%B4%E7%90%86/" class="article-nav-link">
+      <a href="/2020/02/27/spark/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">TLA+资料整理</div>
+        <div class="article-nav-title">Spark</div>
       </a>
     
   </nav>

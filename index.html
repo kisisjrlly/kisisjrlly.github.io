@@ -66,6 +66,110 @@
     
     
     
+    <article id="post-docker 安装spark" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/"
+    >Spark</a
+  >
+</h2>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/" class="article-date">
+  <time datetime="2020-06-26T23:21:18.998Z" itemprop="datePublished">2020-06-27</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/experience/">experience</a>
+  </div>
+
+      
+      
+      
+    </div>
+    
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <p>疫情期间身边只有笔记本，想学习一哈spark（因为正在研究declarative  ml，要看SystemML的论文），配置环境太麻烦，因此想用docker pull 一下网上现成的镜像，由于是私人hub，docker直接pull时还是网络慢到让人崩溃。。。采用github上的自己build，由于国内网络原因，安装了n次，好几个g的镜像，简直让人崩溃。</p>
+<p>过了n天后，偶然想起阿里云提供了免费的doker 仓库并支在线build。真是爽歪歪。。。</p>
+<p>一句话总结整个过程的安装方式：利用github上的Dockerfile，使用阿里云提供的容器镜像服务，构建对应的 Docker镜像，从阿里云中pull到本地。</p>
+<p>从dockerfile 到 build 全部在线完成，没有网络问题，速度也杠杠的，不得不感谢阿里云云计算的NB(因为免费，所以感谢，所以NB，haha)。</p>
+<p>现在记录一下过程：</p>
+<ul>
+<li>利用github fork <a href="https://github.com/sequenceiq/docker-spark。" target="_blank" rel="noopener">https://github.com/sequenceiq/docker-spark。</a></li>
+<li>阿里云容器镜像服务关联上述仓库，然后build，如果可以build成功，ok，本文结束。</li>
+</ul>
+<p>人生之不如意，十有八九。下面记载我直接build过程会遇到如下错误（如果用github+阿里云，都会遇到下面的问题）：</p>
+<p><img src="https://img-blog.csdnimg.cn/20200420223722488.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>找不到epel安装源，大概是/etc/yum.repos.d/epel.repo 中镜像列表是https的问题，所以我直接修正并新建了一个epel.repo文件，build时替换掉原先的文件。</p>
+<ul>
+<li><p>此外按照原先的rpm安装epel方式在安装R语言时会遇到依赖问题，因此我直接把Dockerfile中的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN rpm -ivh http:&#x2F;&#x2F;dl.fedoraproject.org&#x2F;pub&#x2F;epel&#x2F;6&#x2F;x86_64&#x2F;epel-release-6-8.noarch.rpm</span><br></pre></td></tr></table></figure>
+<p>修改为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN yum -y install epel-release</span><br></pre></td></tr></table></figure>
+<p>因为镜像在build的过程中不能和命令交互，因此yum时别忘了参数 ==-y==。</p>
+</li>
+<li><p>因为镜像太大，阿里云build时成功率不会是百分之百，比如：<br><img src="https://img-blog.csdnimg.cn/20200420230859514.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+</li>
+</ul>
+<p>具体原因是：</p>
+<p><img src="https://img-blog.csdnimg.cn/20200420230927347.png" alt="image"></p>
+<p>所以多尝试几次就好了（毕竟免费，免费）。。。</p>
+<p>修改完后可以直接build成功的github仓库可以直接fork：<a href="https://github.com/kisisjrlly/docker-spark/" target="_blank" rel="noopener">https://github.com/kisisjrlly/docker-spark/</a></p>
+<p>然后在本机上可以直接pull阿里云上build好的镜像啦，然后就可以愉快的玩耍啦。。。</p>
+<h3 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h3><ul>
+<li><a href="https://blog.csdn.net/weixin_43569697/article/details/89279225" target="_blank" rel="noopener">修改阿里下载镜像</a></li>
+<li><a href="https://cr.console.aliyun.com/cn-hangzhou/instances/mirrors" target="_blank" rel="noopener">阿里容器镜像服务</a></li>
+<li><a href="https://mp.weixin.qq.com/s/kf0SrktAze3bT7LcIveDYw" target="_blank" rel="noopener">国内下载被墙的Docker镜像</a></li>
+</ul>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/docker/" rel="tag">docker</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/spark/" rel="tag">spark</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+
+  
+  
+  
+
+  
+
+</article>
+    
     <article id="post-spark" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 

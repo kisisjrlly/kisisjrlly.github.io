@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-04-18T07:19:21.369Z</updated>
+  <updated>2020-06-26T23:23:36.630Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,35 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Spark</title>
+    <link href="http://yoursite.com/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/"/>
+    <id>http://yoursite.com/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/</id>
+    <published>2020-06-26T23:21:18.998Z</published>
+    <updated>2020-06-26T23:23:36.630Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;疫情期间身边只有笔记本，想学习一哈spark（因为正在研究declarative  ml，要看SystemML的论文），配置环境太麻烦，因此想用docker pull
+        
+      
+    
+    </summary>
+    
+    
+      <category term="experience" scheme="http://yoursite.com/categories/experience/"/>
+    
+    
+      <category term="spark" scheme="http://yoursite.com/tags/spark/"/>
+    
+      <category term="docker" scheme="http://yoursite.com/tags/docker/"/>
+    
+  </entry>
   
   <entry>
     <title>Spark</title>
