@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Spark</title>
+    <title>docker安装Spark</title>
     <url>/2020/06/27/docker%20%E5%AE%89%E8%A3%85spark/</url>
     <content><![CDATA[<p>疫情期间身边只有笔记本，想学习一哈spark（因为正在研究declarative  ml，要看SystemML的论文），配置环境太麻烦，因此想用docker pull 一下网上现成的镜像，由于是私人hub，docker直接pull时还是网络慢到让人崩溃。。。采用github上的自己build，由于国内网络原因，安装了n次，好几个g的镜像，简直让人崩溃。</p>
 <p>过了n天后，偶然想起阿里云提供了免费的doker 仓库并支在线build。真是爽歪歪。。。</p>
