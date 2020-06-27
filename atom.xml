@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-06-26T23:59:02.756Z</updated>
+  <updated>2020-06-27T00:03:19.370Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,37 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>流系统漫游（持续更新中...）</title>
+    <link href="http://yoursite.com/2020/06/27/%E6%B5%81%E7%B3%BB%E7%BB%9F%E6%BC%AB%E6%B8%B8/"/>
+    <id>http://yoursite.com/2020/06/27/%E6%B5%81%E7%B3%BB%E7%BB%9F%E6%BC%AB%E6%B8%B8/</id>
+    <published>2020-06-27T00:00:59.785Z</published>
+    <updated>2020-06-27T00:03:19.370Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;本文从谷歌Dataflow system论文的角度初探streaming
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed system" scheme="http://yoursite.com/categories/distributed-system/"/>
+    
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="big date" scheme="http://yoursite.com/tags/big-date/"/>
+    
+      <category term="streaming system" scheme="http://yoursite.com/tags/streaming-system/"/>
+    
+  </entry>
   
   <entry>
     <title>未来数据库趋势-Tidb</title>
