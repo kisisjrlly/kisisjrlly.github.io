@@ -66,6 +66,183 @@
     
     
     
+    <article id="post-PostgreSQL 内核 learning" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2020/07/23/PostgreSQL%20%E5%86%85%E6%A0%B8%20learning/"
+    >PostgreSQL内核分析教程</a
+  >
+</h2>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2020/07/23/PostgreSQL%20%E5%86%85%E6%A0%B8%20learning/" class="article-date">
+  <time datetime="2020-07-23T10:13:35.692Z" itemprop="datePublished">2020-07-23</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a> / <a class="article-category-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%BA%90%E4%BB%A3%E7%A0%81/">源代码</a>
+  </div>
+
+      
+      
+      
+    </div>
+    
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>现有的关系型数据库在系统稳定性，安全性等方面积累数十年的优势，如何改进现有的关系型数据库使之适用于当今的OLAP，机器学习（如提高单机大规模神经网络训练的能力）场景具有较大的潜力。目前为止Tidb的Tiflash并未开源（据说其论文目前于VLDB2020在审），PostgreSQL作为开源关系数据库中的王者，其内核值得学习，虽然现在一些工作已经对pg做出改进，但是spark引领的系统展现出势不可挡的趋势，期待传统关系型数据库重新复盘审视自己的设计模式，以总结出更多的经验，展现出更强大的生命力。</p>
+<h2 id="学习资料"><a href="#学习资料" class="headerlink" title="学习资料"></a>学习资料</h2><ul>
+<li><a href="https://zhuanlan.zhihu.com/p/27704963" target="_blank" rel="noopener">阿里云psotgresql从入门到精通</a></li>
+<li><a href="PostgreSQL内核开发学习资料">PostgreSQL内核开发学习资料</a></li>
+</ul>
+<h2 id="1-系统概述"><a href="#1-系统概述" class="headerlink" title="1. 系统概述"></a>1. 系统概述</h2><h3 id="1-1-简介及发展历程"><a href="#1-1-简介及发展历程" class="headerlink" title="1.1 简介及发展历程"></a>1.1 简介及发展历程</h3><ul>
+<li>由Stonebraker于1986年创建，开源版本使用BSD许可协议</li>
+<li>1994年，UCB研究生吴恩达和另一名同学开发了一个SQL解释器，并将其重命名为PostgreSQL<h3 id="1-2-Postgresql特性"><a href="#1-2-Postgresql特性" class="headerlink" title="1.2 Postgresql特性"></a>1.2 Postgresql特性</h3></li>
+<li>内置丰富的数据类型，图，json，数组，用户可自定义类型。</li>
+<li>GiST索引</li>
+<li>Postgresql对标Oracle</li>
+<li>与MySQL的对比：<a href="https://www.zhihu.com/question/20010554/answer/62628256" target="_blank" rel="noopener">https://www.zhihu.com/question/20010554/answer/62628256</a><h3 id="1-4-安装"><a href="#1-4-安装" class="headerlink" title="1.4 安装"></a>1.4 安装</h3></li>
+<li><a href="https://blog.csdn.net/u011652364/article/details/79286652" target="_blank" rel="noopener">https://blog.csdn.net/u011652364/article/details/79286652</a><h3 id="1-3-代码结构"><a href="#1-3-代码结构" class="headerlink" title="1.3 代码结构"></a>1.3 代码结构</h3></li>
+<li><a href="https://wiki.postgresql.org/wiki/Pgsrcstructure" target="_blank" rel="noopener">https://wiki.postgresql.org/wiki/Pgsrcstructure</a></li>
+<li><a href="https://doxygen.postgresql.org/" target="_blank" rel="noopener">https://doxygen.postgresql.org/</a></li>
+<li><a href="https://wiki.postgresql.org/wiki/Pgsrcstructure" target="_blank" rel="noopener">https://wiki.postgresql.org/wiki/Pgsrcstructure</a></li>
+</ul>
+<h2 id="2-Postgresql-体系结构"><a href="#2-Postgresql-体系结构" class="headerlink" title="2. Postgresql 体系结构"></a>2. Postgresql 体系结构</h2><p><img src="https://img-blog.csdnimg.cn/20200426162239283.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h3 id="2-1系统表"><a href="#2-1系统表" class="headerlink" title="2.1系统表"></a>2.1系统表</h3><p>系统表存储了postgresql中所有数据对象及其属性的描述信息和对象之间的关系的描述信息，对象属性的自然语言含义和数据库状态信息的变化历史。</p>
+<h4 id="2-1-1-主要系统表"><a href="#2-1-1-主要系统表" class="headerlink" title="2.1.1 主要系统表"></a>2.1.1 主要系统表</h4><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>系统表</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>pg_namespace</td>
+<td>存储所有数据对象的名字空间,比如数据库，表，索引，视图</td>
+</tr>
+<tr>
+<td>2</td>
+<td>pg_tablespace</td>
+<td>存储表空间信息，所有数据库共享一份pg_tablespace，有助于磁盘存储布局。</td>
+</tr>
+<tr>
+<td>3</td>
+<td>pg_dataspace</td>
+<td>存储数据库信息</td>
+</tr>
+<tr>
+<td>4</td>
+<td>pg_class</td>
+<td>存储表空间信息，所有数据库共享一份pg_tablespace，有助于磁盘存储布局。</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<h4 id="2-1-1-系统视图"><a href="#2-1-1-系统视图" class="headerlink" title="2.1.1 系统视图"></a>2.1.1 系统视图</h4><p>由系统表生成，用于访问系统内部信息。</p>
+<h3 id="2-2-数据集蔟"><a href="#2-2-数据集蔟" class="headerlink" title="2.2 数据集蔟"></a>2.2 数据集蔟</h3><ul>
+<li><p>定义: 用户数据库和系统数据库的集合。</p>
+</li>
+<li><p>数据库是具有特殊文件名，存储位置等属性信息的文件集合。</p>
+</li>
+<li><p>OID是一个无符号整数，用于唯一标识数据集蔟中的所有对象，包括数据库，表，索引，视图，元组，类型等。其分配由一个全局计数器管理，互斥锁访问。</p>
+</li>
+</ul>
+<h3 id="2-2-1-initdb的使用"><a href="#2-2-1-initdb的使用" class="headerlink" title="2.2.1 initdb的使用"></a>2.2.1 initdb的使用</h3><p>使用postgresql之前用于初始化数据集蔟的程序，负责创建数据库系统目录，系统表，模板数据库。</p>
+<h2 id="3-存储管理"><a href="#3-存储管理" class="headerlink" title="3. 存储管理"></a>3. 存储管理</h2><h3 id="3-2-外存管理"><a href="#3-2-外存管理" class="headerlink" title="3.2 外存管理"></a>3.2 外存管理</h3><h4 id="3-2-4-空闲空间映射表FSM"><a href="#3-2-4-空闲空间映射表FSM" class="headerlink" title="3.2.4 空闲空间映射表FSM"></a>3.2.4 空闲空间映射表FSM</h4><ul>
+<li>随着表不断删除和插入元组(record)，文件块中会产生空闲空间。</li>
+<li>插入元组时优先插入到表的空闲空间中。</li>
+<li>每个表文件都有一个空闲空间映射表文件：关系表OID_fsm。</li>
+<li>FSM按照最大堆二叉树的形式保存空闲空间，能够使空闲空间最大值提升到根节点，这样只需要判断根节点是否满足需求，那可知是否有没有满足需求的空闲空间。</li>
+</ul>
+<h4 id="3-2-5-可见性映射表VM"><a href="#3-2-5-可见性映射表VM" class="headerlink" title="3.2.5 可见性映射表VM"></a>3.2.5 可见性映射表VM</h4><ul>
+<li>VM表用来加快VACUUM(快速清理操作)查找无效元组文件块的过程，为表的每一个文件块设置了标志位，用来标记该文件块是否存在无效元组。</li>
+</ul>
+<h4 id="3-2-5-大数据存储"><a href="#3-2-5-大数据存储" class="headerlink" title="3.2.5 大数据存储"></a>3.2.5 大数据存储</h4><p>Postgresql提供了两种大数据存储方式：</p>
+<ul>
+<li>TOAST:使用数据压缩和线外存储实现。</li>
+<li>大对象机制：使用专门的系统表存储。</li>
+</ul>
+<h5 id="3-2-5-1-TOAST"><a href="#3-2-5-1-TOAST" class="headerlink" title="3..2.5.1 TOAST"></a>3..2.5.1 TOAST</h5><ul>
+<li>TOAST机制主要优点在于查询时可以有效的减少占用的存储空间。<br>因为在查询时只比较压缩后的数据。</li>
+<li>同样，压缩后的数据可以放到内存中，加速排序的速度。<h3 id="3-3-内存管理"><a href="#3-3-内存管理" class="headerlink" title="3.3 内存管理"></a>3.3 内存管理</h3></li>
+<li><a href="https://blog.csdn.net/u012234115/article/details/89852480?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.nonecase&depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromMachineLearnPai2-2.nonecase" target="_blank" rel="noopener">C++内存池的简单原理及实现</a></li>
+</ul>
+<h2 id="4-索引"><a href="#4-索引" class="headerlink" title="4. 索引"></a>4. 索引</h2><ul>
+<li>在postgre里，postgre的查询规则器会自动优化和选择索引</li>
+</ul>
+<h3 id="4-1-概述"><a href="#4-1-概述" class="headerlink" title="4.1 概述"></a>4.1 概述</h3><h2 id="5-查询编译"><a href="#5-查询编译" class="headerlink" title="5. 查询编译"></a>5. 查询编译</h2><p>查询模块框架和主要流程如下：<br><img src="https://img-blog.csdnimg.cn/20200520112830998.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h3 id="5-2-查询分析"><a href="#5-2-查询分析" class="headerlink" title="5.2 查询分析"></a>5.2 查询分析</h3><p>查询分析主要流程：<br><img src="https://img-blog.csdnimg.cn/20200520113723263.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h3 id="5-2-1-lex-和-yacc简介"><a href="#5-2-1-lex-和-yacc简介" class="headerlink" title="5.2.1 lex 和 yacc简介"></a>5.2.1 lex 和 yacc简介</h3><ul>
+<li>lex进行词法分析（正则表达式）</li>
+<li>yacc进行语法分析（BNF范式）</li>
+<li>源代码经过lex进行词法分析提取关键词，传入yacc中进行语法分析，进行相应的操作，如加减乘除。</li>
+</ul>
+<h3 id="5-5-2-词法和语法分析"><a href="#5-5-2-词法和语法分析" class="headerlink" title="5.5.2 词法和语法分析"></a>5.5.2 词法和语法分析</h3><ul>
+<li>scan.l:lex文件用于识别SQL的关键字</li>
+<li>gram.y:yacc用于分析词法分析后的语法</li>
+<li>本节将主要分析SQL结构和经过语法分析后在内存中的数据结构 </li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/20200626184452355.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>以 select语句为例，select语句可以由简单的select语句或者接where，sort等语句构成的复杂语句，</p>
+<hr>
+<h2 id="持续更新ing…"><a href="#持续更新ing…" class="headerlink" title="持续更新ing…"></a>持续更新ing…</h2><h2 id="日志"><a href="#日志" class="headerlink" title="日志"></a>日志</h2><p style="color:green">远程隐藏</p>
+
+<h5 id="2020-–-–"><a href="#2020-–-–" class="headerlink" title="2020/–/–"></a>2020/–/–</h5><p>…</p>
+<h5 id="2020-–-–-1"><a href="#2020-–-–-1" class="headerlink" title="2020/–/–"></a>2020/–/–</h5><p>…</p>
+<h5 id="2020-–-–-2"><a href="#2020-–-–-2" class="headerlink" title="2020/–/–"></a>2020/–/–</h5><p>…</p>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/mldatabase/" rel="tag">mldatabase</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/sql/" rel="tag">sql</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+
+  
+  
+  
+
+  
+
+</article>
+    
     <article id="post-流系统漫游" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
