@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-07-23T10:46:25.341Z</updated>
+  <updated>2021-01-27T09:03:54.937Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,37 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
+    <link href="http://yoursite.com/2021/01/27/mysql%20MGR%20%E7%A0%94%E7%A9%B6%E4%B9%8Bpaxos%E5%AE%9E%E7%8E%B0-xcom%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/"/>
+    <id>http://yoursite.com/2021/01/27/mysql%20MGR%20%E7%A0%94%E7%A9%B6%E4%B9%8Bpaxos%E5%AE%9E%E7%8E%B0-xcom%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/</id>
+    <published>2021-01-27T08:55:32.219Z</published>
+    <updated>2021-01-27T09:03:54.937Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;xcom是MGR中实现一致性协议的核心模块，借鉴Mencius算法的思想实现了一套类paxos协议。xcom首先通过GCS接受到MGR封装的事务消息，然后后通过paxos协议在各个节点上达成一致，最终发送再发送给上层MGR。因此MGR中与xcom相关的模块主要包括与GCS的
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed system" scheme="http://yoursite.com/categories/distributed-system/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="fault tolerance" scheme="http://yoursite.com/tags/fault-tolerance/"/>
+    
+  </entry>
   
   <entry>
     <title>PostgreSQL内核分析教程</title>
