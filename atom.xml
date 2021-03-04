@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2021-03-04T12:56:57.106Z</updated>
+  <updated>2021-03-04T13:24:34.438Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -17,11 +17,11 @@
   <generator uri="https://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
+    <title>Mysql-mgr-选主优化</title>
     <link href="http://yoursite.com/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/"/>
     <id>http://yoursite.com/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/</id>
     <published>2021-03-04T12:52:05.671Z</published>
-    <updated>2021-03-04T12:56:57.106Z</updated>
+    <updated>2021-03-04T13:24:34.438Z</updated>
     
     <summary type="html">
     

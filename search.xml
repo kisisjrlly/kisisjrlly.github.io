@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
+    <title>Mysql-mgr-选主优化</title>
     <url>/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/</url>
     <content><![CDATA[<h2 id="选主优化"><a href="#选主优化" class="headerlink" title="选主优化"></a>选主优化</h2><h3 id="原生选主策略"><a href="#原生选主策略" class="headerlink" title="原生选主策略"></a>原生选主策略</h3><p>MGR在单主模式下，当主节点退出集群时会触选主过程，默认的选主策略在选主时会比较节点的server_uuid 和 group_replication_member_weight， 选择哪个secondary作为新的主节点。</p>
 <p>首先比较group_replication_member_weight，值最高的成员被选为新的主节点。如果相同，按照server_uuid排序，排序在最前的被选择为主节点。</p>
