@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2021-01-27T09:03:54.937Z</updated>
+  <updated>2021-03-04T12:56:57.106Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,37 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
+    <link href="http://yoursite.com/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/"/>
+    <id>http://yoursite.com/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/</id>
+    <published>2021-03-04T12:52:05.671Z</published>
+    <updated>2021-03-04T12:56:57.106Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;h2 id=&quot;选主优化&quot;&gt;&lt;a href=&quot;#选主优化&quot; class=&quot;headerlink&quot; title=&quot;选主优化&quot;&gt;&lt;/a&gt;选主优化&lt;/h2&gt;&lt;h3 id=&quot;原生选主策略&quot;&gt;&lt;a href=&quot;#原生选主策略&quot; class=&quot;headerlink&quot;
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed system" scheme="http://yoursite.com/categories/distributed-system/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+      <category term="fault tolerance" scheme="http://yoursite.com/tags/fault-tolerance/"/>
+    
+  </entry>
   
   <entry>
     <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>

@@ -2,6 +2,47 @@
 <search>
   <entry>
     <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
+    <url>/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/</url>
+    <content><![CDATA[<h2 id="选主优化"><a href="#选主优化" class="headerlink" title="选主优化"></a>选主优化</h2><h3 id="原生选主策略"><a href="#原生选主策略" class="headerlink" title="原生选主策略"></a>原生选主策略</h3><p>MGR在单主模式下，当主节点退出集群时会触选主过程，默认的选主策略在选主时会比较节点的server_uuid 和 group_replication_member_weight， 选择哪个secondary作为新的主节点。</p>
+<p>首先比较group_replication_member_weight，值最高的成员被选为新的主节点。如果相同，按照server_uuid排序，排序在最前的被选择为主节点。</p>
+<p>此外可以通过group_replication_set_as_primary() 函数指定主节点：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">select group_replication_set_as_primary(server_uuid);</span><br></pre></td></tr></table></figure>
+
+<p>查看group_replication_member_weight的值，范围为0-100，默认为50：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">show variables like &#39;group_replication_member_weight&#39;;</span><br></pre></td></tr></table></figure>
+<p>设置group_replication_member_weight的值：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">set global group_replication_member_weight &#x3D; 200;</span><br></pre></td></tr></table></figure>
+<p>当想要设置的值小于0时，会自动设置为0，当想要设置的值大于100时，会默认等于100。调整权重后不能自动识别进行主从切换，当新加入的从节点权重较现有的主节点高时也不会发生主从切换，只有当主节点退出重新触发选主时才可以进行。</p>
+<h3 id="优化思路"><a href="#优化思路" class="headerlink" title="优化思路"></a>优化思路</h3><p>在原生选主方式中，希望通过设置group_replication_member_weight参数，希望在发生主从切换时，将硬件配置、性能较好的节点选为主节点，因为理论上这种节点的选择回放速度最快，系统的响应时间最快。但在现实应用场景中，配置较好的节点回放速度不一定更快。因此当发生选主时，可以判断一下集群中所有节点回放速度，选择最快的节点作为主节点。当回放速度相同或者回放过程完成时，再按照原生策略进行选主。</p>
+<p>回放速度可以通过gtid反应出来，在同一时刻，从节点中已执行的gtid值较大的节点回放速度加快，因此选主时选则gtid最新的节点为主节点。</p>
+<p>通过增添和设置参数 primary_election_self_adaption=ON/OFF控制是否需要根据gtid按照节点执行速度选主，还是按照默认的权重+uuid方式选主。默认为OFF </p>
+<p>新加入集群的节点参数primary_election_self_adaption必须与集群中参数相同。</p>
+<h3 id="优化细节"><a href="#优化细节" class="headerlink" title="优化细节"></a>优化细节</h3><p>MGR中class Group_member_info 及 class Group_member_info_manager 保存组中所有成员的状态信息，MGR中已经回放完成的事务对应的gtid保存在executed_gtid_set中。所有节点中executed_gtid_set值最大的节点回放速度最快。一个节点可以通过以下两种方式获取其他节点的executed_gtid_set：</p>
+<ul>
+<li><p>method 1：流控时可以得知其他节点的execute_gtid set。但是选主过程中只要最新时刻的gtid。通过流控过程传播的gitd需要不停的更新各个节点的最新gtid，代价较高。如果只在发生选主时才去读取流控得到的最新gtid，此时流控交互 的信息可能并没有发生传播。</p>
+</li>
+<li><p>method 2: 选主时进入视图变更阶段，视图变更阶段的前期需要与其他节点交互获取其节点的member_weight，execute_gtid_ set等信息，并且进程选主过程的节点不再接受新的写请求，此时交互的信息即为当前集群中各个节点状态的最新信息。</p>
+</li>
+<li><p>选择方法2的方式获取其他节点的execute_gtid_set。Group_member_info 中添加成员变量primary_election_self_adaption,用来表示当前的选主方式。</p>
+</li>
+<li><p>class Group_member_info 中 增加成员函数comparator_group_member_executed_gtid(), 用于选主排序sort函数的仿函数。通过子集的方式判断节点间gitd的大小关系。</p>
+</li>
+</ul>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
+<li><a href="https://github.com/kisisjrlly/mysql-mgr-develop/commit/dbb5e54022c46811d92b61b83830cde815ac9036" target="_blank" rel="noopener">primary-elec-optimize</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>distributed system</category>
+      </categories>
+      <tags>
+        <tag>system</tag>
+        <tag>distribute</tag>
+        <tag>fault tolerance</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Mysql Mgr模块研究之孟子协议实现：xcom模块</title>
     <url>/2021/01/27/mysql%20MGR%20%E7%A0%94%E7%A9%B6%E4%B9%8Bpaxos%E5%AE%9E%E7%8E%B0-xcom%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/</url>
     <content><![CDATA[<p>xcom是MGR中实现一致性协议的核心模块，借鉴Mencius算法的思想实现了一套类paxos协议。xcom首先通过GCS接受到MGR封装的事务消息，然后后通过paxos协议在各个节点上达成一致，最终发送再发送给上层MGR。因此MGR中与xcom相关的模块主要包括与GCS的交互接口，xcom的核心模块paxos实现。在xcom中，首先实现了一套协程机制，xcom所有过程都使用这套协程机制。因此，本文主要介绍一下与上层MGR的交互过程，paxos协议的实现，协程机制的实现，最后看一下paxos各个过程如何通过这套协程实现。</p>
 <h2 id="1-与上层MGR的交互"><a href="#1-与上层MGR的交互" class="headerlink" title="1. 与上层MGR的交互"></a>1. 与上层MGR的交互</h2><p>MGR中的事务以Paxos请求的方式发送给xcom，Paxos通过两阶段协议（propose、accept）或者三阶段的(prepare、propose、accept)方式使各节点达成一致后返回给MGR在进行后续处理。</p>
