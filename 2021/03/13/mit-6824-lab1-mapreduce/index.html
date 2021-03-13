@@ -6,7 +6,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    Mysql-mgr-选主优化 |  babalalala
+    Mit6.824-MapReduce 原型实现 |  babalalala
   </title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   
@@ -32,7 +32,7 @@
   <div id="app">
     <main class="content">
       <section class="outer">
-  <article id="post-Mysql-mgr-选主优化" class="article article-type-post" itemscope
+  <article id="post-mit-6824-lab1-mapreduce" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
   <div class="article-inner">
@@ -40,7 +40,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  Mysql-mgr-选主优化
+  Mit6.824-MapReduce 原型实现
 </h1>
   
 
@@ -49,8 +49,8 @@
 
     
     <div class="article-meta">
-      <a href="/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/" class="article-date">
-  <time datetime="2021-03-04T12:52:05.671Z" itemprop="datePublished">2021-03-04</time>
+      <a href="/2021/03/13/mit-6824-lab1-mapreduce/" class="article-date">
+  <time datetime="2021-03-13T09:03:52.349Z" itemprop="datePublished">2021-03-13</time>
 </a>
       
   <div class="article-category">
@@ -64,7 +64,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">891字</span>
+            <span class="post-count">1.4k字</span>
         </span>
     </span>
 
@@ -73,7 +73,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">3分钟</span>
+            <span class="post-count">5分钟</span>
         </span>
     </span>
 </div>
@@ -100,33 +100,32 @@
       
 
       
-      <h2 id="选主优化"><a href="#选主优化" class="headerlink" title="选主优化"></a>选主优化</h2><h3 id="原生选主策略"><a href="#原生选主策略" class="headerlink" title="原生选主策略"></a>原生选主策略</h3><p>MGR在单主模式下，当主节点退出集群时会触选主过程，默认的选主策略在选主时会比较节点的server_uuid 和 group_replication_member_weight， 选择哪个secondary作为新的主节点。</p>
-<p>首先比较group_replication_member_weight，值最高的成员被选为新的主节点。如果相同，按照server_uuid排序，排序在最前的被选择为主节点。</p>
-<p>此外可以通过group_replication_set_as_primary() 函数指定主节点：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select group_replication_set_as_primary(server_uuid);</span><br></pre></td></tr></table></figure>
-
-<p>查看group_replication_member_weight的值，范围为0-100，默认为50：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show variables like &#39;group_replication_member_weight&#39;;</span><br></pre></td></tr></table></figure>
-<p>设置group_replication_member_weight的值：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set global group_replication_member_weight &#x3D; 200;</span><br></pre></td></tr></table></figure>
-<p>当想要设置的值小于0时，会自动设置为0，当想要设置的值大于100时，会默认等于100。调整权重后不能自动识别进行主从切换，当新加入的从节点权重较现有的主节点高时也不会发生主从切换，只有当主节点退出重新触发选主时才可以进行。</p>
-<h3 id="优化思路"><a href="#优化思路" class="headerlink" title="优化思路"></a>优化思路</h3><p>在原生选主方式中，希望通过设置group_replication_member_weight参数，希望在发生主从切换时，将硬件配置、性能较好的节点选为主节点，因为理论上这种节点的选择回放速度最快，系统的响应时间最快。但在现实应用场景中，配置较好的节点回放速度不一定更快。因此当发生选主时，可以判断一下集群中所有节点回放速度，选择最快的节点作为主节点。当回放速度相同或者回放过程完成时，再按照原生策略进行选主。</p>
-<p>回放速度可以通过gtid反应出来，在同一时刻，从节点中已执行的gtid值较大的节点回放速度加快，因此选主时选则gtid最新的节点为主节点。</p>
-<p>通过增添和设置参数 primary_election_self_adaption=ON/OFF控制是否需要根据gtid按照节点执行速度选主，还是按照默认的权重+uuid方式选主。默认为OFF </p>
-<p>新加入集群的节点参数primary_election_self_adaption必须与集群中参数相同。</p>
-<h3 id="优化细节"><a href="#优化细节" class="headerlink" title="优化细节"></a>优化细节</h3><p>MGR中class Group_member_info 及 class Group_member_info_manager 保存组中所有成员的状态信息，MGR中已经回放完成的事务对应的gtid保存在executed_gtid_set中。所有节点中executed_gtid_set值最大的节点回放速度最快。一个节点可以通过以下两种方式获取其他节点的executed_gtid_set：</p>
+      <p>进入21世纪以来，谷歌带领着工业界和学术界一起迈向大数据时代。大数据的核心为分布式，而在谷歌的三驾马车三篇论文发表之前，工业界和学术界都没有意识到分布式系统中的重点在于容错，无论是分布式计算，分布式调度还是分布式存储。mapreduce是谷歌在分布式计算领域的开篇之作，主要介绍了在计算调度以及容错方面做的工作。原理方面，一图以蔽之：</p>
+<p><img src="https://img-blog.csdnimg.cn/20210313160912137.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<h2 id="mapreduce-原型框架"><a href="#mapreduce-原型框架" class="headerlink" title="mapreduce 原型框架"></a>mapreduce 原型框架</h2><p>MIT 6.824 lab1 主要实现了一个简化版的mapreduce框架，包括计算，调度和容错过程。实验已经完成并通过了所有测试，代码见<a href="https://github.com/kisisjrlly/6.824-all" target="_blank" rel="noopener">github</a>：<br><img src="https://img-blog.csdnimg.cn/20210312141030581.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
+<p>下面介绍一下整个实验的框架理解一下上面原理图的各个过程：</p>
+<ol>
+<li>客户端提供了多个输入文件、一个map函数、一个reduce函数和reduce任务的数量(nReduce)。</li>
+<li>maprecude的中心角色master首先它启动一个RPC服务器（master_rpc.go)，并等待工作节点worker注册。 当tasks可用时（在步骤4和5中），schedule()函数决定如何将这些tasks分配给workers，以及如何处理worker故障。</li>
+<li>master将每个输入文件视为一个map任务，并调用doMap()对每个map任务执行至少一次，可以直接（在使用Sequential（）时）执行对应的操作，也可以通过向worker发出DoTask RPC来执行。 每次对doMap（）的调用都会读取相应的文件，对该文件的内容调用map函数，并将生成的key/value对写入nReduce个中间文件中。doMap()通过hash每个key以选择中间文件，从而选择将处理该key的reduce任务。所有map任务完成后，会产生nMap x nReduce个文件。</li>
+<li>每个worker必须能够读任何其他worker写入的文件。实际部署中使用分布式存储系统(如GFS)来允许这种访问，即使worker运行在不同的节点上。在这个实验中，所有的worker在同一个节点上，并公用本地文件系统。</li>
+<li>master接下来调用doReduce()，对每一项reduce任务至少执行一次。与doMap()一样，它可以直接执行，也可以通过一个worker执行。reduce任务r的doReduce()从每个map任务收集第r个中间文件，并为这些文件中出现的每个key调用reduce函数。reduce任务生成nReduce个结果文件。</li>
+<li>master调用mr.merge() 将前面步骤生成的所有nReduce个文件合并到一个输出中文件中。</li>
+<li>master向每个worker发送一个关闭RPC，然后关闭它自己的RPC服务</li>
+</ol>
+<p>下面简要介绍一个本实验各个部分的内容，主要分为计算，调度和容错三个部分。</p>
+<h2 id="Part1-实现map和reduce过程"><a href="#Part1-实现map和reduce过程" class="headerlink" title="Part1 实现map和reduce过程"></a>Part1 实现map和reduce过程</h2><p>本part主要实现划分map任务输出的函数，以及为reduce任务收集所有输入的函数。这个功能主要由common_map中的doMap()函数完成以及common_reduce中的doReduce()函数完成。</p>
+<h2 id="Part3-分布式的mapreduce任务调度"><a href="#Part3-分布式的mapreduce任务调度" class="headerlink" title="Part3 分布式的mapreduce任务调度"></a>Part3 分布式的mapreduce任务调度</h2><p>part1中主要实现了一次运行一个map和reduce任务。Map/Reduce最大的卖点之一是它可以自动并行化执行各个tasks，而不需要使用人员做任何额外的工作。在本part中将完成一个分布式版本的MapReduce，它通过一组在多个核上并行运行的工作线程来分割工作。<br>虽然不像在实际的Map/Reduce部署中那样分布在多台机器上，将使用RPC来模拟分布式计算。</p>
 <ul>
-<li><p>method 1：流控时可以得知其他节点的execute_gtid set。但是选主过程中只要最新时刻的gtid。通过流控过程传播的gitd需要不停的更新各个节点的最新gtid，代价较高。如果只在发生选主时才去读取流控得到的最新gtid，此时流控交互 的信息可能并没有发生传播。</p>
-</li>
-<li><p>method 2: 选主时进入视图变更阶段，视图变更阶段的前期需要与其他节点交互获取其节点的member_weight，execute_gtid_ set等信息，并且进程选主过程的节点不再接受新的写请求，此时交互的信息即为当前集群中各个节点状态的最新信息。</p>
-</li>
-<li><p>选择方法2的方式获取其他节点的execute_gtid_set。Group_member_info 中添加成员变量primary_election_self_adaption,用来表示当前的选主方式。</p>
-</li>
-<li><p>class Group_member_info 中 增加成员函数comparator_group_member_executed_gtid(), 用于选主排序sort函数的仿函数。通过子集的方式判断节点间gitd的大小关系。</p>
-</li>
+<li>mapreduce/master.go完成了管理MapReduce任务的大部分工作。mapreduce/worker中主要实现了worker线程的完整逻辑。mapreduce/common_rpc.go用于处理RPC。</li>
+<li>本part主要工作是在mapreduce/schedule.go中实现schedule()。在MapReduce作业中，master调用schedule()两次，一次是在Map阶段，一次是在Reduce阶段。schedule()的工作是将任务分配给可用的worker。通常会有比工作线程更多的任务，因此schedule()必须给每个工作线程一个任务序列，一次一个。schedule()应该等待所有任务完成，然后返回。</li>
+<li>schedule()通过读取它的registerChan参数来了解worker集合。该channel保存了每个worker的RPC地址。有些worker可能在schedule()调用之前就存在，有些worker可能在schedule()运行时启动;所有的都会出现在registerChan上。</li>
+<li>schedule()应该使用所有的worker，包括在它启动后出现的worker。schedule()通过发送一个DoTask RPC来告诉worker执行一个任务。这个RPC的参数是由mapreduce/common_rpc.go中的DoTaskArgs定义的。File参数仅用于Map任务，是要读取的文件的名称;schedule()可以在mapFiles中找到这些文件名。</li>
 </ul>
-<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ul>
-<li><a href="https://github.com/kisisjrlly/mysql-mgr-develop/commit/dbb5e54022c46811d92b61b83830cde815ac9036" target="_blank" rel="noopener">primary-elec-optimize</a></li>
+<h2 id="Part4-处理worker故障"><a href="#Part4-处理worker故障" class="headerlink" title="Part4 处理worker故障"></a>Part4 处理worker故障</h2><p>本part中，主要实现master处理失败的worker以进任务的重新分配。</p>
+<ul>
+<li>如果一个worker在处理来自master的RPC时失败，master对应的调用函数call()将最终由于超时而返回false。在这种情况下，master应该把分配给失败worker的任务重新分配给另一个worker。</li>
+<li>RPC失败并不一定代表worker没有执行任务;worker可能已经执行了但是响应丢失了，或者worker可能仍然在执行，但是master的RPC超时了。因此，可能会发生两个worker接收相同的任务，计算并生成输出。对于给定的输入，需要两次调用map或reduce函数来生成相同的输出(即map和reduce函数是“幂等性”)，所以如果后续处理有时读取一个输出，有时读取另一个输出，就不会出现不一致的情况。</li>
 </ul>
 
       
@@ -193,14 +192,14 @@
     <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/" alt="微信分享二维码">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2021/03/13/mit-6824-lab1-mapreduce/" alt="微信分享二维码">
     </div>
 </div>
 
 <div id="share-mask"></div>
       
       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/fault-tolerance/" rel="tag">fault tolerance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
 
 
     </footer>
@@ -211,19 +210,10 @@
   
   <nav class="article-nav">
     
-      <a href="/2021/03/13/mit-6824-lab1-mapreduce/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            Mit6.824-MapReduce 原型实现
-          
-        </div>
-      </a>
     
-    
-      <a href="/2021/01/27/mysql%20MGR%20%E7%A0%94%E7%A9%B6%E4%B9%8Bpaxos%E5%AE%9E%E7%8E%B0-xcom%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90/" class="article-nav-link">
+      <a href="/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">Mysql Mgr模块研究之孟子协议实现：xcom模块</div>
+        <div class="article-nav-title">Mysql-mgr-选主优化</div>
       </a>
     
   </nav>

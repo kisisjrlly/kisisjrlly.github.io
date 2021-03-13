@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2021-03-04T13:24:34.438Z</updated>
+  <updated>2021-03-13T09:19:53.437Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,35 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Mit6.824-MapReduce 原型实现</title>
+    <link href="http://yoursite.com/2021/03/13/mit-6824-lab1-mapreduce/"/>
+    <id>http://yoursite.com/2021/03/13/mit-6824-lab1-mapreduce/</id>
+    <published>2021-03-13T09:03:52.349Z</published>
+    <updated>2021-03-13T09:19:53.437Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;进入21世纪以来，谷歌带领着工业界和学术界一起迈向大数据时代。大数据的核心为分布式，而在谷歌的三驾马车三篇论文发表之前，工业界和学术界都没有意识到分布式系统中的重点在于容错，无论是分布式计算，分布式调度还是分布式存储。mapreduce是谷歌在分布式计算领域的开篇之作，主要
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed system" scheme="http://yoursite.com/categories/distributed-system/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+  </entry>
   
   <entry>
     <title>Mysql-mgr-选主优化</title>
