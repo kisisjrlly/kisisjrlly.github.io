@@ -66,6 +66,129 @@
     
     
     
+    <article id="post-mit-6824-lab-paxos" class="article article-type-post" itemscope
+  itemprop="blogPost" data-scroll-reveal>
+
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/2021/03/22/mit-6824-lab-paxos/"
+    >Mit6.824-paxos lab实现</a
+  >
+</h2>
+  
+
+    </header>
+    
+
+    
+    <div class="article-meta">
+      <a href="/2021/03/22/mit-6824-lab-paxos/" class="article-date">
+  <time datetime="2021-03-22T09:52:01.258Z" itemprop="datePublished">2021-03-22</time>
+</a>
+      
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/distributed-system/">distributed system</a>
+  </div>
+
+      
+      
+      
+    </div>
+    
+
+    
+
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+
+
+      
+
+      
+      <p>平常说paxos一般是指lamport提出的basic paxos算法，后续所有的multi paxos 算法或者协议都是basic paxos算法的工程实现，以raft为例，都是借鉴了basic paxos 两阶段+投票的思想，但是在集群中各个节点的角色设置，如何处理网络故障，数据snapshot等方面做了basic paxos协议未提及的优化和实现。<br>basic paxos是为了解决分布式系统各个节点在不能保证可靠且实时通信的条件下，各个节点可以并发的提议请求，但是最终所有节点都对一个唯一的结果达成一致的算法。这是一个充满浪漫主义的算法，类比一些multi paxos 或者raft 算法就多了很多限制，比如加了所有节点中只有一个领导者可以提议请求，那么，整个一致性过程会变的简单的多。</p>
+<h3 id="paxos-回顾"><a href="#paxos-回顾" class="headerlink" title="paxos 回顾"></a>paxos 回顾</h3><p>basic paxos处理的基本问题：</p>
+<ul>
+<li>有一台或多台服务器会并发的提议（propose）一些值。</li>
+<li>系统必须通过一定机制从propose的值中选定（chose）一个值。</li>
+<li>只有一个值能被选定（chosen）。即不允许整个系统先选定了值A，后面又改选定值B。</li>
+</ul>
+<p>basic的基本过程如下：</p>
+<p><img src="https://img-blog.csdnimg.cn/2020122914594029.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70&ynotemdtimestamp=1616403019329" alt="image"></p>
+<p>伪代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">  proposer(v):</span><br><span class="line">  while not decided:</span><br><span class="line">    choose n, unique and higher than any n seen so far</span><br><span class="line">    send prepare(n) to all servers including self</span><br><span class="line">    if prepare_ok(n_a, v_a) from majority:</span><br><span class="line">      v&#39; &#x3D; v_a with highest n_a; choose own v otherwise</span><br><span class="line">      send accept(n, v&#39;) to all</span><br><span class="line">      if accept_ok(n) from majority:</span><br><span class="line">        send decided(v&#39;) to all</span><br><span class="line"></span><br><span class="line">acceptor&#39;s state:</span><br><span class="line">  n_p (highest prepare seen)</span><br><span class="line">  n_a, v_a (highest accept seen)</span><br><span class="line"></span><br><span class="line">acceptor&#39;s prepare(n) handler:</span><br><span class="line">  if n &gt; n_p</span><br><span class="line">    n_p &#x3D; n</span><br><span class="line">    reply prepare_ok(n_a, v_a)</span><br><span class="line">  else</span><br><span class="line">    reply prepare_reject</span><br><span class="line"></span><br><span class="line">acceptor&#39;s accept(n, v) handler:</span><br><span class="line">  if n &gt;&#x3D; n_p</span><br><span class="line">    n_p &#x3D; n</span><br><span class="line">    n_a &#x3D; n</span><br><span class="line">    v_a &#x3D; v</span><br><span class="line">    reply accept_ok(n)</span><br><span class="line">  else</span><br><span class="line">    reply accept_reject</span><br></pre></td></tr></table></figure>
+
+<p>paxos算法本身的过程很简单，都说paxos难，难点有二：</p>
+<ul>
+<li>paxos难以理解，主要难以理解为什么是正确的</li>
+<li>难以实现一个完全正确的paxos过程，上述伪代码中，集群中所有节点都会同时运行着所有的过程，每行代码之间都可能会并发和同步。</li>
+</ul>
+<h3 id="Mit6-824-paxos实验"><a href="#Mit6-824-paxos实验" class="headerlink" title="Mit6.824 paxos实验"></a>Mit6.824 paxos实验</h3><p>Mit6.824 关于 paxos的实验就是为了实现一个基本正确的paxos协议。之所以说基本正确是因为其提供的测试样例肯定没有考虑的所有的边界情况。但是，实现一个基本正确的paxos算法有助于理解上述提到的两个难点。整个算法的实现完全按照理论部分的过程，对于各个节点上唯一的提议号，我采用了初始序号+节点id的形式，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">type ProposeId struct &#123;</span><br><span class="line">	Ballot int</span><br><span class="line">	Id     int</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func greaterProposeId(a, b ProposeId) bool &#123;</span><br><span class="line">	if (a.Ballot &gt; b.Ballot) || ((a.Ballot &#x3D;&#x3D; b.Ballot) &amp;&amp; a.Id &gt; b.Id) &#123;</span><br><span class="line">		return true</span><br><span class="line">	&#125;</span><br><span class="line">	return false</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func equalProposeId(a, b ProposeId) bool &#123;</span><br><span class="line">	return a.Ballot &#x3D;&#x3D; b.Ballot &amp;&amp; a.Id &#x3D;&#x3D; b.Id</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用到的实验的版本是2014年版。整个实验过程大体如下：</p>
+<p>这个实现中必须要实现以下的接口：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; Make是用来创建一个paxos节点的，也就是说一个paxos节点的初始化函数</span><br><span class="line">px &#x3D; paxos.Make(peers []string, me int)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 这个是用来对一个实例发起一致性过程的函数，seq代表paxos中的序列号，v代表这个序列号需要达成的内容是什么。。比如 100，“asdf”，都行</span><br><span class="line">px.Start(seq int, v interface&#123;&#125;) &#x2F;&#x2F; start agreement on new instance</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 用来获取一个节点是否认为已经决定了一个实例，如果已经决定了，那么商定的值是多少。Status()应该只检查本地节点的状态;它不应该与其他Paxos节点联系。</span><br><span class="line">px.Status(seq int) (decided bool, v interface&#123;&#125;) &#x2F;&#x2F; get info about an instance</span><br><span class="line"></span><br><span class="line">px.Done(seq int) &#x2F;&#x2F; ok to forget all instances &lt;&#x3D; seq</span><br><span class="line"></span><br><span class="line">px.Max() int &#x2F;&#x2F; highest instance seq known, or -1</span><br><span class="line"></span><br><span class="line">px.Min() int &#x2F;&#x2F; instances before this have been forgotten</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>程序调用Make(peer,me)来创建Paxos peers。peer参数包含所有peers的端口(包括这个)，me参数是对等点数组中这个对等点的索引。Start(seq,v)请求Paxos启动实例seq协议，建议值v;Start()应该立即返回，而不是等待协议完成。应用程序调用Status(seq)来查明Paxos对等方是否认为实例已经达成协议，如果已经达成协议，那么商定的值是多少。Status()应查询本地Paxos对等点的状态并立即返回;它不应该与其他同行通信。应用程序可以为旧实例调用Status()(但是请参阅下面关于Done()的讨论)。</p>
+</li>
+<li><p>实现需要能够同时在多个实例的协议上进行。也就是说，如果程序中各个peer使用不同的序列号同时调用Start()，那么实现应该同时为它们运行Paxos协议。在启动协议(例如i +1)之前，不应该等待协议(例如i)完成。每个实例都应该有自己独立的Paxos协议执行。</p>
+</li>
+<li><p>长时间运行的基于paxos的服务器必须忘记不再需要的实例，并释放存储这些实例信息的内存。如果应用程序仍然希望能够调用该实例的Status()，或者另一个Paxos对等方可能尚未就该实例达成协议，则需要一个实例。您的Paxos应该通过以下方式实现实例的释放。当某个特定的对等应用程序不再需要为任何实例调用Status()时，它应该调用Done(x)。该Paxos对等点还不能丢弃实例，因为其他一些Paxos对等点可能还没有同意该实例。因此，每个Paxos对等点应该告诉其他对等点其本地应用程序提供的最高已完成参数。然后，每个Paxos对等点之间都有一个Done值。它们应该找到最小的那个值，并丢弃序列号&lt;=该最小值的所有实例。Min()方法返回这个最小序列号加1。</p>
+</li>
+<li><p>实现可以使用协议协议包中的Done值;也就是说，对等点P1可以在下一次P2向P1发送协议消息时只学习P2的最新Done值。如果调用Start()的序列号小于Min()，则应该忽略Start()调用。如果使用小于Min()的序列号调用Status()，则Status()应该返回false(表示没有达成一致了)。</p>
+<p>这里给出一个比较合理的实现步骤：</p>
+</li>
+<li><p>在Paxos中向Paxos结构体添加元素。根据课程伪代码，去保存你需要的状态。您需要定义一个结构来保存关于每个协议实例的信息。</p>
+</li>
+<li><p>基于lecture伪代码，为Paxos协议消息定义RPC参数/应答类型。rpc必须包含它们所引用的协议实例的序列号。记住RPC结构中的字段名必须以大写字母开头。</p>
+</li>
+<li><p>为实例编写一个驱动Paxos协议的proposal函数，以及实现acceptor的RPC处理程序。根据需要在自己的线程中为每个实例启动一个proposal函数(例如，in Start())。</p>
+</li>
+</ul>
+<h3 id="提示："><a href="#提示：" class="headerlink" title="提示："></a>提示：</h3><ul>
+<li>一个以上的Paxos实例可能在一个给定的时间执行，start 和 decide 过程需要容忍乱序执行。</li>
+<li>为了通过假定网络不可靠的测试，您的paxos应该通过函数call调用本地接受器，而不是RPC。</li>
+<li>请记住，多个peer可能在同一个实例上调用Start()，可能使用不同的提议值。peer序甚至可以为已经确定的实例调用Start()。</li>
+<li>在开始编写代码之前，考虑一下您的paxos将如何忘记(丢弃)关于旧实例的信息。每个Paxospeer将需要在允许删除单个实例记录的数据结构中存储实例信息(以便Go垃圾收集器可以释放/重用内存)。</li>
+<li>不需要来处理Paxos程序在崩溃后需要重新启动的情况。如果一个Paxos peer崩溃，它将永远不会重新启动。</li>
+<li>让每个Paxos 节点为每个未决定的实例启动一个线程，该实例的任务是作为一个提议者最终驱动实例达成协议。</li>
+<li>一个Paxos对等点可以同时作为同一个实例的接受者和提议者。将这两个活动尽可能分开。</li>
+<li>一个提议者需要一种方法来选择一个比目前所见的任何一个都要高的提议数。这是提议人和接受人应该分开的规则的合理例外。如果提案RPC处理程序拒绝RPC，则返回已知的最高提案号，以帮助调用者下次选择更高的提案号。</li>
+</ul>
+
+      
+      <!-- reward -->
+      
+    </div>
+    
+    
+      <!-- copyright -->
+      
+    <footer class="article-footer">
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
+
+
+    </footer>
+
+  </div>
+
+  
+
+  
+  
+  
+
+  
+
+</article>
+    
     <article id="post-mit-6824-lab1-mapreduce" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
@@ -1474,103 +1597,6 @@
       
       
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/fault-tolerance/" rel="tag">fault tolerance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/paxos/" rel="tag">paxos</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/raft/" rel="tag">raft</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
-
-
-    </footer>
-
-  </div>
-
-  
-
-  
-  
-  
-
-  
-
-</article>
-    
-    <article id="post-ElasticDL- A Kubernetes-native Deep Learning Framework" class="article article-type-post" itemscope
-  itemprop="blogPost" data-scroll-reveal>
-
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/"
-    >ElasticDL</a
-  >
-</h2>
-  
-
-    </header>
-    
-
-    
-    <div class="article-meta">
-      <a href="/2020/02/24/ElasticDL-%20A%20Kubernetes-native%20Deep%20Learning%20Framework/" class="article-date">
-  <time datetime="2020-02-24T05:44:04.549Z" itemprop="datePublished">2020-02-24</time>
-</a>
-      
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/distributed-computation/">distributed computation</a>
-  </div>
-
-      
-      
-      
-    </div>
-    
-
-    
-
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-
-
-      
-
-      
-      <h1 id="k8s原生的深度学习框架"><a href="#k8s原生的深度学习框架" class="headerlink" title="k8s原生的深度学习框架"></a>k8s原生的深度学习框架</h1><p>ElasticDL是一个kubernets原生的深度学习框架，构建在TensorFlow 2.0之上，支持容错和弹性调度。</p>
-<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>TensorFlow有其本地的分布式计算特性，可以进行故障恢复。当某些进程失败时，分布式计算作业也会失败;但是，我们可以重新启动作业，并从最近的检查点文件恢复其运行时状态。</p>
-<p>ElasticDL增强了TensorFlow的分布式训练特性，支持容错。在某些进程失败的情况下，作业将继续运行。因此，ElasticDL不需要检查点，也不需要从检查点恢复。</p>
-<p>容错特性使得ElasticDL与Kubernetes基于优先级的抢占机制协同工作，实现弹性调度。当Kubernetes终止一个作业的某些进程，将资源释放给具有更高优先级的新作业时，当前作业不会失败，而是在资源更少的情况下继续工作。</p>
-<p>弹性调度可以显著提高集群的整体利用率。假设一个集群有N个gpu，一个作业使用其中一个。如果没有弹性调度，一个使用N个gpu的新作业在开始之前必须等待第一个作业完成。这个等待时间可能是几个小时、几天甚至几周。在这段很长的时间内，集群的利用率是1/N。使用弹性调度，新作业可以在N-1个GPU上立即开始运行，Kubernetes可以在第一个作业完成后将其GPU消耗增加1。在本例中，总利用率为100。</p>
-<p>ElasticDL的弹性调度特性来自于它的Kubernetes本机设计——它不依赖Kubeflow等Kubernetes扩展来运行TensorFlow程序;相反，ElasticDL作业的主进程调用Kubernetes API来启动worker和参数服务器;它还监视诸如进程/pod杀死之类的事件，并对此类事件作出响应，以实现容错。</p>
-<p>总之，在Kubernetes集群的情况下，ElasticDL通过容错和弹性调度增强了TensorFlow。我们提供了一个教程，演示如何在谷歌云中设置Kubernetes集群并在那里运行ElasticDL作业。我们尊重TensorFlow的本地分布式计算特性，它不需要像Kubernetes这样的特定计算平台，并且允许TensorFlow在任何平台上运行。</p>
-<h2 id="主要特性"><a href="#主要特性" class="headerlink" title="主要特性"></a>主要特性</h2><h3 id="弹性调度和容错"><a href="#弹性调度和容错" class="headerlink" title="弹性调度和容错"></a>弹性调度和容错</h3><ul>
-<li>ElasticDL通过Kubernetes-native设计实现容错，并与Kubernetes基于优先级的抢占机制协同工作，实现深度学习任务的弹性调度。</li>
-</ul>
-<h3 id="TF2-0：Eager-Execution"><a href="#TF2-0：Eager-Execution" class="headerlink" title="TF2.0：Eager Execution"></a>TF2.0：Eager Execution</h3><ul>
-<li>分布式深度学习框架在模型更新之前需要了解局部梯度。Eager Execution允许ElasticDL在不侵入图形执行过程的情况下执行。</li>
-</ul>
-<h3 id="极简API"><a href="#极简API" class="headerlink" title="极简API"></a>极简API</h3><p>给定一个用Keras API定义的模型，用命令行训练该模型。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">elasticdl train --model_def&#x3D;mnist_functional_api.custom_model --training_data&#x3D;&#x2F;mnist&#x2F;train --output&#x3D;output</span><br></pre></td></tr></table></figure>
-
-<h3 id="与SQLFlow整合"><a href="#与SQLFlow整合" class="headerlink" title="与SQLFlow整合"></a>与SQLFlow整合</h3><ul>
-<li>ElasticDL将与SQLFlow无缝集成，将SQL与ElasticDL连接到分布式深度学习任务。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM employee LABEL income INTO my_elasticdl_model</span><br></pre></td></tr></table></figure>
-
-
-</li>
-</ul>
-<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><ul>
-<li><a href="https://github.com/sql-machine-learning/elasticdl" target="_blank" rel="noopener">github主页</a></li>
-</ul>
-
-      
-      <!-- reward -->
-      
-    </div>
-    
-    
-      <!-- copyright -->
-      
-    <footer class="article-footer">
-      
-      
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/distribute/" rel="tag">distribute</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/fault-tolerance/" rel="tag">fault tolerance</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/ml/" rel="tag">ml</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/system/" rel="tag">system</a></li></ul>
 
 
     </footer>

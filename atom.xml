@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2021-03-13T09:19:53.437Z</updated>
+  <updated>2021-03-22T09:53:25.066Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,35 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>Mit6.824-paxos lab实现</title>
+    <link href="http://yoursite.com/2021/03/22/mit-6824-lab-paxos/"/>
+    <id>http://yoursite.com/2021/03/22/mit-6824-lab-paxos/</id>
+    <published>2021-03-22T09:52:01.258Z</published>
+    <updated>2021-03-22T09:53:25.066Z</updated>
+    
+    <summary type="html">
+    
+      
+      
+        
+        
+          &lt;p&gt;平常说paxos一般是指lamport提出的basic paxos算法，后续所有的multi paxos 算法或者协议都是basic paxos算法的工程实现，以raft为例，都是借鉴了basic paxos
+        
+      
+    
+    </summary>
+    
+    
+      <category term="distributed system" scheme="http://yoursite.com/categories/distributed-system/"/>
+    
+    
+      <category term="system" scheme="http://yoursite.com/tags/system/"/>
+    
+      <category term="distribute" scheme="http://yoursite.com/tags/distribute/"/>
+    
+  </entry>
   
   <entry>
     <title>Mit6.824-MapReduce 原型实现</title>

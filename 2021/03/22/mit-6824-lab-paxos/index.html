@@ -6,7 +6,7 @@
     
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
   <title>
-    Mit6.824-MapReduce 原型实现 |  babalalala
+    Mit6.824-paxos lab实现 |  babalalala
   </title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   
@@ -32,7 +32,7 @@
   <div id="app">
     <main class="content">
       <section class="outer">
-  <article id="post-mit-6824-lab1-mapreduce" class="article article-type-post" itemscope
+  <article id="post-mit-6824-lab-paxos" class="article article-type-post" itemscope
   itemprop="blogPost" data-scroll-reveal>
 
   <div class="article-inner">
@@ -40,7 +40,7 @@
     <header class="article-header">
        
 <h1 class="article-title sea-center" style="border-left:0" itemprop="name">
-  Mit6.824-MapReduce 原型实现
+  Mit6.824-paxos lab实现
 </h1>
   
 
@@ -49,8 +49,8 @@
 
     
     <div class="article-meta">
-      <a href="/2021/03/13/mit-6824-lab1-mapreduce/" class="article-date">
-  <time datetime="2021-03-13T09:03:52.349Z" itemprop="datePublished">2021-03-13</time>
+      <a href="/2021/03/22/mit-6824-lab-paxos/" class="article-date">
+  <time datetime="2021-03-22T09:52:01.258Z" itemprop="datePublished">2021-03-22</time>
 </a>
       
   <div class="article-category">
@@ -64,7 +64,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">1.4k字</span>
+            <span class="post-count">2.2k字</span>
         </span>
     </span>
 
@@ -73,7 +73,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">5分钟</span>
+            <span class="post-count">8分钟</span>
         </span>
     </span>
 </div>
@@ -100,32 +100,56 @@
       
 
       
-      <p>进入21世纪以来，谷歌带领着工业界和学术界一起迈向大数据时代。大数据的核心为分布式，而在谷歌的三驾马车三篇论文发表之前，工业界和学术界都没有意识到分布式系统中的重点在于容错，无论是分布式计算，分布式调度还是分布式存储。mapreduce是谷歌在分布式计算领域的开篇之作，主要介绍了在计算调度以及容错方面做的工作。原理方面，一图以蔽之：</p>
-<p><img src="https://img-blog.csdnimg.cn/20210313160912137.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
-<h2 id="mapreduce-原型框架"><a href="#mapreduce-原型框架" class="headerlink" title="mapreduce 原型框架"></a>mapreduce 原型框架</h2><p>MIT 6.824 lab1 主要实现了一个简化版的mapreduce框架，包括计算，调度和容错过程。实验已经完成并通过了所有测试，代码见<a href="https://github.com/kisisjrlly/6.824-all" target="_blank" rel="noopener">github</a>：<br><img src="https://img-blog.csdnimg.cn/20210312141030581.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70" alt="image"></p>
-<p>下面介绍一下整个实验的框架理解一下上面原理图的各个过程：</p>
-<ol>
-<li>客户端提供了多个输入文件、一个map函数、一个reduce函数和reduce任务的数量(nReduce)。</li>
-<li>maprecude的中心角色master首先它启动一个RPC服务器（master_rpc.go)，并等待工作节点worker注册。 当tasks可用时（在步骤4和5中），schedule()函数决定如何将这些tasks分配给workers，以及如何处理worker故障。</li>
-<li>master将每个输入文件视为一个map任务，并调用doMap()对每个map任务执行至少一次，可以直接（在使用Sequential（）时）执行对应的操作，也可以通过向worker发出DoTask RPC来执行。 每次对doMap（）的调用都会读取相应的文件，对该文件的内容调用map函数，并将生成的key/value对写入nReduce个中间文件中。doMap()通过hash每个key以选择中间文件，从而选择将处理该key的reduce任务。所有map任务完成后，会产生nMap x nReduce个文件。</li>
-<li>每个worker必须能够读任何其他worker写入的文件。实际部署中使用分布式存储系统(如GFS)来允许这种访问，即使worker运行在不同的节点上。在这个实验中，所有的worker在同一个节点上，并公用本地文件系统。</li>
-<li>master接下来调用doReduce()，对每一项reduce任务至少执行一次。与doMap()一样，它可以直接执行，也可以通过一个worker执行。reduce任务r的doReduce()从每个map任务收集第r个中间文件，并为这些文件中出现的每个key调用reduce函数。reduce任务生成nReduce个结果文件。</li>
-<li>master调用mr.merge() 将前面步骤生成的所有nReduce个文件合并到一个输出中文件中。</li>
-<li>master向每个worker发送一个关闭RPC，然后关闭它自己的RPC服务</li>
-</ol>
-<p>下面简要介绍一个本实验各个部分的内容，主要分为计算，调度和容错三个部分。</p>
-<h2 id="Part1-实现map和reduce过程"><a href="#Part1-实现map和reduce过程" class="headerlink" title="Part1 实现map和reduce过程"></a>Part1 实现map和reduce过程</h2><p>本part主要实现划分map任务输出的函数，以及为reduce任务收集所有输入的函数。这个功能主要由common_map中的doMap()函数完成以及common_reduce中的doReduce()函数完成。</p>
-<h2 id="Part3-分布式的mapreduce任务调度"><a href="#Part3-分布式的mapreduce任务调度" class="headerlink" title="Part3 分布式的mapreduce任务调度"></a>Part3 分布式的mapreduce任务调度</h2><p>part1中主要实现了一次运行一个map和reduce任务。Map/Reduce最大的卖点之一是它可以自动并行化执行各个tasks，而不需要使用人员做任何额外的工作。在本part中将完成一个分布式版本的MapReduce，它通过一组在多个核上并行运行的工作线程来分割工作。<br>虽然不像在实际的Map/Reduce部署中那样分布在多台机器上，将使用RPC来模拟分布式计算。</p>
+      <p>平常说paxos一般是指lamport提出的basic paxos算法，后续所有的multi paxos 算法或者协议都是basic paxos算法的工程实现，以raft为例，都是借鉴了basic paxos 两阶段+投票的思想，但是在集群中各个节点的角色设置，如何处理网络故障，数据snapshot等方面做了basic paxos协议未提及的优化和实现。<br>basic paxos是为了解决分布式系统各个节点在不能保证可靠且实时通信的条件下，各个节点可以并发的提议请求，但是最终所有节点都对一个唯一的结果达成一致的算法。这是一个充满浪漫主义的算法，类比一些multi paxos 或者raft 算法就多了很多限制，比如加了所有节点中只有一个领导者可以提议请求，那么，整个一致性过程会变的简单的多。</p>
+<h3 id="paxos-回顾"><a href="#paxos-回顾" class="headerlink" title="paxos 回顾"></a>paxos 回顾</h3><p>basic paxos处理的基本问题：</p>
 <ul>
-<li>mapreduce/master.go完成了管理MapReduce任务的大部分工作。mapreduce/worker中主要实现了worker线程的完整逻辑。mapreduce/common_rpc.go用于处理RPC。</li>
-<li>本part主要工作是在mapreduce/schedule.go中实现schedule()。在MapReduce作业中，master调用schedule()两次，一次是在Map阶段，一次是在Reduce阶段。schedule()的工作是将任务分配给可用的worker。通常会有比工作线程更多的任务，因此schedule()必须给每个工作线程一个任务序列，一次一个。schedule()应该等待所有任务完成，然后返回。</li>
-<li>schedule()通过读取它的registerChan参数来了解worker集合。该channel保存了每个worker的RPC地址。有些worker可能在schedule()调用之前就存在，有些worker可能在schedule()运行时启动;所有的都会出现在registerChan上。</li>
-<li>schedule()应该使用所有的worker，包括在它启动后出现的worker。schedule()通过发送一个DoTask RPC来告诉worker执行一个任务。这个RPC的参数是由mapreduce/common_rpc.go中的DoTaskArgs定义的。File参数仅用于Map任务，是要读取的文件的名称;schedule()可以在mapFiles中找到这些文件名。</li>
+<li>有一台或多台服务器会并发的提议（propose）一些值。</li>
+<li>系统必须通过一定机制从propose的值中选定（chose）一个值。</li>
+<li>只有一个值能被选定（chosen）。即不允许整个系统先选定了值A，后面又改选定值B。</li>
 </ul>
-<h2 id="Part4-处理worker故障"><a href="#Part4-处理worker故障" class="headerlink" title="Part4 处理worker故障"></a>Part4 处理worker故障</h2><p>本part中，主要实现master处理失败的worker以进任务的重新分配。</p>
+<p>basic的基本过程如下：</p>
+<p><img src="https://img-blog.csdnimg.cn/2020122914594029.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzI4MjU4OTAz,size_16,color_FFFFFF,t_70&ynotemdtimestamp=1616403019329" alt="image"></p>
+<p>伪代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">  proposer(v):</span><br><span class="line">  while not decided:</span><br><span class="line">    choose n, unique and higher than any n seen so far</span><br><span class="line">    send prepare(n) to all servers including self</span><br><span class="line">    if prepare_ok(n_a, v_a) from majority:</span><br><span class="line">      v&#39; &#x3D; v_a with highest n_a; choose own v otherwise</span><br><span class="line">      send accept(n, v&#39;) to all</span><br><span class="line">      if accept_ok(n) from majority:</span><br><span class="line">        send decided(v&#39;) to all</span><br><span class="line"></span><br><span class="line">acceptor&#39;s state:</span><br><span class="line">  n_p (highest prepare seen)</span><br><span class="line">  n_a, v_a (highest accept seen)</span><br><span class="line"></span><br><span class="line">acceptor&#39;s prepare(n) handler:</span><br><span class="line">  if n &gt; n_p</span><br><span class="line">    n_p &#x3D; n</span><br><span class="line">    reply prepare_ok(n_a, v_a)</span><br><span class="line">  else</span><br><span class="line">    reply prepare_reject</span><br><span class="line"></span><br><span class="line">acceptor&#39;s accept(n, v) handler:</span><br><span class="line">  if n &gt;&#x3D; n_p</span><br><span class="line">    n_p &#x3D; n</span><br><span class="line">    n_a &#x3D; n</span><br><span class="line">    v_a &#x3D; v</span><br><span class="line">    reply accept_ok(n)</span><br><span class="line">  else</span><br><span class="line">    reply accept_reject</span><br></pre></td></tr></table></figure>
+
+<p>paxos算法本身的过程很简单，都说paxos难，难点有二：</p>
 <ul>
-<li>如果一个worker在处理来自master的RPC时失败，master对应的调用函数call()将最终由于超时而返回false。在这种情况下，master应该把分配给失败worker的任务重新分配给另一个worker。</li>
-<li>RPC失败并不一定代表worker没有执行任务;worker可能已经执行了但是响应丢失了，或者worker可能仍然在执行，但是master的RPC超时了。因此，可能会发生两个worker接收相同的任务，计算并生成输出。对于给定的输入，需要两次调用map或reduce函数来生成相同的输出(即map和reduce函数是“幂等性”)，所以如果后续处理有时读取一个输出，有时读取另一个输出，就不会出现不一致的情况。</li>
+<li>paxos难以理解，主要难以理解为什么是正确的</li>
+<li>难以实现一个完全正确的paxos过程，上述伪代码中，集群中所有节点都会同时运行着所有的过程，每行代码之间都可能会并发和同步。</li>
+</ul>
+<h3 id="Mit6-824-paxos实验"><a href="#Mit6-824-paxos实验" class="headerlink" title="Mit6.824 paxos实验"></a>Mit6.824 paxos实验</h3><p>Mit6.824 关于 paxos的实验就是为了实现一个基本正确的paxos协议。之所以说基本正确是因为其提供的测试样例肯定没有考虑的所有的边界情况。但是，实现一个基本正确的paxos算法有助于理解上述提到的两个难点。整个算法的实现完全按照理论部分的过程，对于各个节点上唯一的提议号，我采用了初始序号+节点id的形式，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">type ProposeId struct &#123;</span><br><span class="line">	Ballot int</span><br><span class="line">	Id     int</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func greaterProposeId(a, b ProposeId) bool &#123;</span><br><span class="line">	if (a.Ballot &gt; b.Ballot) || ((a.Ballot &#x3D;&#x3D; b.Ballot) &amp;&amp; a.Id &gt; b.Id) &#123;</span><br><span class="line">		return true</span><br><span class="line">	&#125;</span><br><span class="line">	return false</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func equalProposeId(a, b ProposeId) bool &#123;</span><br><span class="line">	return a.Ballot &#x3D;&#x3D; b.Ballot &amp;&amp; a.Id &#x3D;&#x3D; b.Id</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>用到的实验的版本是2014年版。整个实验过程大体如下：</p>
+<p>这个实现中必须要实现以下的接口：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;&#x2F; Make是用来创建一个paxos节点的，也就是说一个paxos节点的初始化函数</span><br><span class="line">px &#x3D; paxos.Make(peers []string, me int)</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 这个是用来对一个实例发起一致性过程的函数，seq代表paxos中的序列号，v代表这个序列号需要达成的内容是什么。。比如 100，“asdf”，都行</span><br><span class="line">px.Start(seq int, v interface&#123;&#125;) &#x2F;&#x2F; start agreement on new instance</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; 用来获取一个节点是否认为已经决定了一个实例，如果已经决定了，那么商定的值是多少。Status()应该只检查本地节点的状态;它不应该与其他Paxos节点联系。</span><br><span class="line">px.Status(seq int) (decided bool, v interface&#123;&#125;) &#x2F;&#x2F; get info about an instance</span><br><span class="line"></span><br><span class="line">px.Done(seq int) &#x2F;&#x2F; ok to forget all instances &lt;&#x3D; seq</span><br><span class="line"></span><br><span class="line">px.Max() int &#x2F;&#x2F; highest instance seq known, or -1</span><br><span class="line"></span><br><span class="line">px.Min() int &#x2F;&#x2F; instances before this have been forgotten</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>程序调用Make(peer,me)来创建Paxos peers。peer参数包含所有peers的端口(包括这个)，me参数是对等点数组中这个对等点的索引。Start(seq,v)请求Paxos启动实例seq协议，建议值v;Start()应该立即返回，而不是等待协议完成。应用程序调用Status(seq)来查明Paxos对等方是否认为实例已经达成协议，如果已经达成协议，那么商定的值是多少。Status()应查询本地Paxos对等点的状态并立即返回;它不应该与其他同行通信。应用程序可以为旧实例调用Status()(但是请参阅下面关于Done()的讨论)。</p>
+</li>
+<li><p>实现需要能够同时在多个实例的协议上进行。也就是说，如果程序中各个peer使用不同的序列号同时调用Start()，那么实现应该同时为它们运行Paxos协议。在启动协议(例如i +1)之前，不应该等待协议(例如i)完成。每个实例都应该有自己独立的Paxos协议执行。</p>
+</li>
+<li><p>长时间运行的基于paxos的服务器必须忘记不再需要的实例，并释放存储这些实例信息的内存。如果应用程序仍然希望能够调用该实例的Status()，或者另一个Paxos对等方可能尚未就该实例达成协议，则需要一个实例。您的Paxos应该通过以下方式实现实例的释放。当某个特定的对等应用程序不再需要为任何实例调用Status()时，它应该调用Done(x)。该Paxos对等点还不能丢弃实例，因为其他一些Paxos对等点可能还没有同意该实例。因此，每个Paxos对等点应该告诉其他对等点其本地应用程序提供的最高已完成参数。然后，每个Paxos对等点之间都有一个Done值。它们应该找到最小的那个值，并丢弃序列号&lt;=该最小值的所有实例。Min()方法返回这个最小序列号加1。</p>
+</li>
+<li><p>实现可以使用协议协议包中的Done值;也就是说，对等点P1可以在下一次P2向P1发送协议消息时只学习P2的最新Done值。如果调用Start()的序列号小于Min()，则应该忽略Start()调用。如果使用小于Min()的序列号调用Status()，则Status()应该返回false(表示没有达成一致了)。</p>
+<p>这里给出一个比较合理的实现步骤：</p>
+</li>
+<li><p>在Paxos中向Paxos结构体添加元素。根据课程伪代码，去保存你需要的状态。您需要定义一个结构来保存关于每个协议实例的信息。</p>
+</li>
+<li><p>基于lecture伪代码，为Paxos协议消息定义RPC参数/应答类型。rpc必须包含它们所引用的协议实例的序列号。记住RPC结构中的字段名必须以大写字母开头。</p>
+</li>
+<li><p>为实例编写一个驱动Paxos协议的proposal函数，以及实现acceptor的RPC处理程序。根据需要在自己的线程中为每个实例启动一个proposal函数(例如，in Start())。</p>
+</li>
+</ul>
+<h3 id="提示："><a href="#提示：" class="headerlink" title="提示："></a>提示：</h3><ul>
+<li>一个以上的Paxos实例可能在一个给定的时间执行，start 和 decide 过程需要容忍乱序执行。</li>
+<li>为了通过假定网络不可靠的测试，您的paxos应该通过函数call调用本地接受器，而不是RPC。</li>
+<li>请记住，多个peer可能在同一个实例上调用Start()，可能使用不同的提议值。peer序甚至可以为已经确定的实例调用Start()。</li>
+<li>在开始编写代码之前，考虑一下您的paxos将如何忘记(丢弃)关于旧实例的信息。每个Paxospeer将需要在允许删除单个实例记录的数据结构中存储实例信息(以便Go垃圾收集器可以释放/重用内存)。</li>
+<li>不需要来处理Paxos程序在崩溃后需要重新启动的情况。如果一个Paxos peer崩溃，它将永远不会重新启动。</li>
+<li>让每个Paxos 节点为每个未决定的实例启动一个线程，该实例的任务是作为一个提议者最终驱动实例达成协议。</li>
+<li>一个Paxos对等点可以同时作为同一个实例的接受者和提议者。将这两个活动尽可能分开。</li>
+<li>一个提议者需要一种方法来选择一个比目前所见的任何一个都要高的提议数。这是提议人和接受人应该分开的规则的合理例外。如果提案RPC处理程序拒绝RPC，则返回已知的最高提案号，以帮助调用者下次选择更高的提案号。</li>
 </ul>
 
       
@@ -192,7 +216,7 @@
     <a class="modal-close" href="javascript:;"><i class="ri-close-circle-line"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2021/03/13/mit-6824-lab1-mapreduce/" alt="微信分享二维码">
+      <img src="//api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://yoursite.com/2021/03/22/mit-6824-lab-paxos/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -210,19 +234,10 @@
   
   <nav class="article-nav">
     
-      <a href="/2021/03/22/mit-6824-lab-paxos/" class="article-nav-link">
-        <strong class="article-nav-caption">上一篇</strong>
-        <div class="article-nav-title">
-          
-            Mit6.824-paxos lab实现
-          
-        </div>
-      </a>
     
-    
-      <a href="/2021/03/04/Mysql-mgr-%E9%80%89%E4%B8%BB%E4%BC%98%E5%8C%96/" class="article-nav-link">
+      <a href="/2021/03/13/mit-6824-lab1-mapreduce/" class="article-nav-link">
         <strong class="article-nav-caption">下一篇</strong>
-        <div class="article-nav-title">Mysql-mgr-选主优化</div>
+        <div class="article-nav-title">Mit6.824-MapReduce 原型实现</div>
       </a>
     
   </nav>
